@@ -119,6 +119,39 @@ function QuerySelectedBot(name)
 	end)
 end
 
+-- Real-time minimum gap between stats queries per bot (wait() is frame-tick based, not seconds).
+PARTY_STATS_MIN_INTERVAL = 60
+
+-- Ask each party bot for its stats (money, bag space), staggered to avoid a whisper burst.
+-- Per-bot GetTime throttle so PARTY_MEMBERS_CHANGED spam cannot flood.
+function QueryBotPartyStats()
+	local now = 0
+	if GetTime then
+		now = GetTime()
+	end
+	local delay = 0
+	local queued = 0
+	for i = 1, 5 do
+		local name = partyName(i)
+		local bot = nil
+		if name ~= nil then
+			bot = botTable[name]
+		end
+		if bot ~= nil then
+			local last = bot["lastStatsQuery"]
+			if last == nil or (now - last) >= PARTY_STATS_MIN_INTERVAL then
+				bot["lastStatsQuery"] = now
+				wait(0.1 + delay, function(target)
+					SendBotCommand(EnsureAddonPrefix("stats"), "WHISPER", nil, target)
+				end, name)
+				delay = delay + 0.5
+				queued = queued + 1
+			end
+		end
+	end
+	return queued
+end
+
 -- ---------------------------------------------------------------------------
 -- Hide protocol chatter from the default chat frames (safety net + outgoing)
 -- ---------------------------------------------------------------------------
@@ -185,6 +218,10 @@ local HIDE_PREFIXES = {
 	"BOT\t",
 }
 
+local function IsStatsReplyMessage(message)
+	return string.find(message, "%d+/%d+ Bag") ~= nil
+end
+
 function IsBotProtocolMessage(message)
 	if message == nil then
 		return false
@@ -206,6 +243,9 @@ function IsBotProtocolMessage(message)
 		if StartsWith(lower, string.lower(prefix)) then
 			return true
 		end
+	end
+	if IsStatsReplyMessage(msg) then
+		return true
 	end
 	return false
 end
@@ -245,6 +285,7 @@ function InstallBotChatFilters()
 				or event == "CHAT_MSG_WHISPER_INFORM"
 				or event == "CHAT_MSG_SYSTEM"
 				or event == "CHAT_MSG_PARTY"
+				or event == "CHAT_MSG_PARTY_LEADER"
 				or event == "CHAT_MSG_RAID"
 				or event == "CHAT_MSG_RAID_LEADER"
 				or event == "CHAT_MSG_RAID_WARNING"
@@ -297,6 +338,25 @@ local function ParseStrategyList(bot, type, text)
 		bot["role"] = role
 	end
 	bot["strategy"][type] = list
+end
+
+-- Parse a playerbots "stats" reply: money, free/total bag slots.
+-- Reply shape (after color strip): "12g 34s 5c, 20/56 Bag, ... Dur, ... XP, ... Pwr".
+-- Returns nil when the message is not a stats reply.
+function ParseStatsReply(message)
+	if message == nil then
+		return nil
+	end
+	local bagFree, bagTotal = string.match(message, "(%d+)/(%d+) Bag")
+	if bagFree == nil then
+		return nil
+	end
+	local money = string.match(message, "^([^,]*)")
+	return {
+		money = trim2(money),
+		bagFree = tonumber(bagFree),
+		bagTotal = tonumber(bagTotal),
+	}
 end
 
 function OnWhisper(message, sender)
@@ -424,6 +484,13 @@ function OnWhisper(message, sender)
 	if body ~= nil then
 		bot["rti"] = body
 	end
+
+	local stats = ParseStatsReply(message)
+	if stats ~= nil then
+		bot["money"] = stats.money
+		bot["bagFree"] = stats.bagFree
+		bot["bagTotal"] = stats.bagTotal
+	end
 end
 
 function OnSystemMessage(message)
@@ -433,6 +500,7 @@ function OnSystemMessage(message)
 	message = NormalizeMessage(message)
 
 	if StartsWith(message, "Bot roster:") then
+		local previous = botTable
 		botTable = {}
 		local text = AfterPrefix(message, "Bot roster:")
 		local splitted = splitString2(text, ", ")
@@ -450,6 +518,31 @@ function OnSystemMessage(message)
 					end
 					botTable[name]["class"] = cls
 					botTable[name]["online"] = (on == "+")
+
+					-- Keep cached role/stats across roster rebuilds (badges + control panel).
+					local prior = previous[name]
+					if prior ~= nil then
+						local keep = {
+							"role",
+							"money",
+							"bagFree",
+							"bagTotal",
+							"strategy",
+							"formation",
+							"stance",
+							"savemana",
+							"loot",
+							"rti",
+							"rti_cc",
+							"lastStatsQuery",
+						}
+						for k = 1, table.getn(keep) do
+							local key = keep[k]
+							if prior[key] ~= nil then
+								botTable[name][key] = prior[key]
+							end
+						end
+					end
 				end
 			end
 		end

@@ -119,6 +119,8 @@ function StripColors(s)
 	s = string.gsub(s, "|c[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]", "")
 	s = string.gsub(s, "|r", "")
 	s = string.gsub(s, "|H.-|h(.-)|h", "%1")
+	-- Dangling link terminators (playerbots stats replies embed bare |h around numbers)
+	s = string.gsub(s, "|h", "")
 	s = string.gsub(s, "||", "|")
 	return s
 end

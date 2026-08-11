@@ -1451,10 +1451,93 @@ function OpenDropDownMenu(bot)
 	ToggleDropDownMenu(1, nil, DropDownMenu, "cursor")
 end
 
+function CreatePartyBotOverlays()
+	local overlays = {}
+	for i = 1, 4 do
+		local parent = getglobal("PartyMemberFrame" .. i)
+		if parent ~= nil then
+			local overlay = CreateFrame("Frame", "PartyBotOverlay" .. i, parent)
+			overlay:SetWidth(70)
+			overlay:SetHeight(44)
+			overlay:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -4, -2)
+			overlay:SetFrameLevel(50)
+			overlay:EnableMouse(false)
+
+			local role = overlay:CreateTexture(nil, "OVERLAY")
+			role:SetPoint("TOPRIGHT", overlay, "TOPRIGHT", 0, 0)
+			role:SetWidth(16)
+			role:SetHeight(16)
+			role:SetTexture("Interface\\Addons\\Mangosbot\\Images\\role_dps.tga")
+			overlay.role = role
+
+			local gold = overlay:CreateFontString()
+			gold:SetPoint("TOPRIGHT", overlay, "TOPRIGHT", 0, -17)
+			gold:SetWidth(70)
+			gold:SetFont("Fonts/FRIZQT__.TTF", 9, "OUTLINE")
+			gold:SetJustifyH("RIGHT")
+			overlay.gold = gold
+
+			local bags = overlay:CreateFontString()
+			bags:SetPoint("TOPRIGHT", overlay, "TOPRIGHT", 0, -29)
+			bags:SetWidth(70)
+			bags:SetFont("Fonts/FRIZQT__.TTF", 9, "OUTLINE")
+			bags:SetJustifyH("RIGHT")
+			overlay.bags = bags
+
+			overlay:Hide()
+			overlays[i] = overlay
+		end
+	end
+	return overlays
+end
+
+function UpdatePartyBotOverlays()
+	if PartyBotOverlays == nil then
+		return
+	end
+	for i = 1, 4 do
+		local overlay = PartyBotOverlays[i]
+		if overlay == nil then
+			return
+		end
+		local bot = botTable[partyName(i)]
+		-- Party members are online by definition; only hide when roster explicitly says offline.
+		if GetNumRaidMembers() > 0 or bot == nil or bot["online"] == false then
+			overlay:Hide()
+		else
+			local role = bot["role"]
+			if role == nil then
+				overlay.role:Hide()
+			else
+				overlay.role:Show()
+				overlay.role:SetTexture("Interface\\Addons\\Mangosbot\\Images\\role_" .. role .. ".tga")
+			end
+
+			local money = bot["money"]
+			if money == nil or money == "" then
+				overlay.gold:SetText("-")
+			else
+				overlay.gold:SetText(money)
+			end
+
+			local bagFree = bot["bagFree"]
+			local bagTotal = bot["bagTotal"]
+			if bagFree == nil or bagTotal == nil then
+				overlay.bags:SetText("-")
+			else
+				overlay.bags:SetText(bagFree .. "/" .. bagTotal)
+			end
+
+			overlay:Show()
+		end
+	end
+end
+
 SelectedBotPanel = CreateSelectedBotPanel()
 BotRoster = CreateBotRoster()
 BotDebugPanel = CreateBotDebugPanel()
 DropDownMenu = CreateDropDownMenu(BotRoster)
+PartyBotOverlays = CreatePartyBotOverlays()
 CurrentBot = nil
 
 function UpdateGroupToolBar()

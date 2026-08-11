@@ -25,6 +25,8 @@ InviteUnit = function() end
 InviteByName = function() end
 SendChatMessage = function() end
 SendAddonMessage = function() end
+local fakeTime = 1000
+GetTime = function() return fakeTime end
 
 local failures = 0
 local function check(name, cond)
@@ -51,6 +53,7 @@ check("trim2 strips tabs/newlines", trim2("\tfoo\n") == "foo")
 
 check("StripColors removes |cAARRGGBB", StripColors("|cff00ff00near|r") == "near")
 check("StripColors leaves plain text", StripColors("near") == "near")
+check("StripColors removes dangling |h", StripColors("|h20/56|h Bag") == "20/56 Bag")
 check("NormalizeMessage strips color and trims", NormalizeMessage("  |cff00ff00behind|r  ") == "behind")
 
 local parts = splitString2("a, b, c", ", ")
@@ -138,6 +141,30 @@ check("rti cc set to", botTable[bot].rti_cc == "diamond")
 OnWhisper('BOT\tFormation: |cff00ff00arrow|r', bot)
 check("BOT\\t frame stripped", botTable[bot].formation == "arrow")
 
+-- Stats replies (playerbots StatsAction format)
+OnWhisper(
+    '12g 34s 5c, |h|cff00ff0020/56|h|cffffffff Bag, |cff00ff00100% (0)|cffffffff Dur, '
+        .. '|cff00ff0078|cffffd333/|cff00ff00200%|cffffffff XP, |h|cff1eff00214|h|cffffffff|h Pwr',
+    bot
+)
+check("stats parses money", botTable[bot].money == "12g 34s 5c")
+check("stats parses bag free", botTable[bot].bagFree == 20)
+check("stats parses bag total", botTable[bot].bagTotal == 56)
+check("stats keeps strategy cache", botTable[bot].role == "tank")
+
+OnWhisper('0, |cff00ff00|h16/16|h|cffffffff Bag', bot)
+check("stats zero money", botTable[bot].money == "0")
+check("stats zero money bags", botTable[bot].bagFree == 16 and botTable[bot].bagTotal == 16)
+
+local stats = ParseStatsReply('5g 20s, 30/40 Bag, 80% (0) Dur')
+check("ParseStatsReply plain line", stats.money == "5g 20s" and stats.bagFree == 30 and stats.bagTotal == 40)
+check("ParseStatsReply nil on non-stats", ParseStatsReply('Formation: near') == nil)
+check("ParseStatsReply nil on nil", ParseStatsReply(nil) == nil)
+
+check("IsBotProtocolMessage stats reply",
+    IsBotProtocolMessage('12g 34s 5c, |h|cff00ff0020/56|h|cffffffff Bag, 100% (0) Dur') == true)
+check("IsBotProtocolMessage normal chat not stats", IsBotProtocolMessage('How many bags do you want?') == false)
+
 -- CHAT_MSG_ADDON payload helper
 local m, s = GetChatEventPayload("CHAT_MSG_ADDON", "BOT", "Stance: tank", "PARTY", "BotA")
 check("GetChatEventPayload addon", m == "Stance: tank" and s == "BotA")
@@ -169,6 +196,14 @@ OnSystemMessage('Bot roster: +W Warrior, -M Mage')
 OnWhisper('Combat Strategies: frost', bot)
 check("botCount roster plus TestBot", botCount() == 3)
 
+-- Roster rebuild must keep cached role/stats for party badges
+OnWhisper('9g, 11/22 Bag', bot)
+OnSystemMessage('Bot roster: +' .. bot .. ' Warrior, +W Warrior, -M Mage')
+check("roster rebuild keeps money", botTable[bot].money == "9g")
+check("roster rebuild keeps bags", botTable[bot].bagFree == 11 and botTable[bot].bagTotal == 22)
+check("roster rebuild keeps role", botTable[bot].role == "dps")
+check("roster rebuild sets class/online", botTable[bot].class == "Warrior" and botTable[bot].online == true)
+
 local immediate = 0
 check("wait accepts valid args", wait(0.05, function() immediate = immediate + 1 end) == true)
 check("wait rejects non-number delay", wait("x", function() end) == false)
@@ -188,6 +223,44 @@ for _ = 1, 5 do waitFrame.script() end
 check("wait defers while delay remains", delayed == 0)
 waitFrame.script()
 check("wait runs callback after enough ticks", delayed == 1)
+
+-- QueryBotPartyStats staggers a stats whisper to each party bot
+OnSystemMessage('Bot roster: +BotA Warrior, +BotB Mage, +BotC Priest')
+GetNumPartyMembers = function() return 3 end
+GetNumRaidMembers = function() return 0 end
+UnitName = function(unit)
+    if unit == "party1" then return "BotA" end
+    if unit == "party2" then return "BotB" end
+    if unit == "party3" then return "BotC" end
+    return nil
+end
+local sent = {}
+SendChatMessage = function(text, chat, _lang, target)
+    sent[#sent + 1] = { text = text, chat = chat, target = target }
+end
+fakeTime = 5000
+QueryBotPartyStats()
+for _ = 1, 12 do waitFrame.script() end
+check("QueryBotPartyStats whispers each party bot", #sent == 3)
+check("QueryBotPartyStats uses BOT frame + #a stats",
+    sent[1].text == "BOT\t#a stats" and sent[1].chat == "WHISPER" and sent[1].target == "BotA")
+check("QueryBotPartyStats targets last party bot", sent[3].target == "BotC")
+
+sent = {}
+QueryBotPartyStats()
+for _ = 1, 12 do waitFrame.script() end
+check("QueryBotPartyStats throttles within interval", #sent == 0)
+
+fakeTime = 5000 + PARTY_STATS_MIN_INTERVAL
+sent = {}
+QueryBotPartyStats()
+for _ = 1, 12 do waitFrame.script() end
+check("QueryBotPartyStats allows after interval", #sent == 3)
+
+SendChatMessage = function() end
+GetNumPartyMembers = function() return 0 end
+GetNumRaidMembers = function() return 0 end
+UnitName = function() return nil end
 
 -- Classic client detection
 GetBuildInfo = function() return "1.12.1", "5875", "Sep 19 2006", 11000 end

@@ -1,10 +1,175 @@
 local Mangosbot_EventFrame = CreateFrame("Frame")
 Mangosbot_EventFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
+Mangosbot_EventFrame:RegisterEvent("PARTY_MEMBERS_CHANGED")
 Mangosbot_EventFrame:RegisterEvent("CHAT_MSG_WHISPER")
 Mangosbot_EventFrame:RegisterEvent("CHAT_MSG_ADDON")
+Mangosbot_EventFrame:RegisterEvent("CHAT_MSG_PARTY")
+Mangosbot_EventFrame:RegisterEvent("CHAT_MSG_PARTY_LEADER")
+Mangosbot_EventFrame:RegisterEvent("CHAT_MSG_RAID")
+Mangosbot_EventFrame:RegisterEvent("CHAT_MSG_RAID_LEADER")
 Mangosbot_EventFrame:RegisterEvent("CHAT_MSG_SYSTEM")
 Mangosbot_EventFrame:RegisterEvent("UPDATE")
 Mangosbot_EventFrame:Hide()
+
+local function IsGroupChatEvent(event)
+	return event == "CHAT_MSG_PARTY"
+		or event == "CHAT_MSG_PARTY_LEADER"
+		or event == "CHAT_MSG_RAID"
+		or event == "CHAT_MSG_RAID_LEADER"
+end
+
+local function IsBotChatEvent(event)
+	return event == "CHAT_MSG_WHISPER"
+		or event == "CHAT_MSG_ADDON"
+		or IsGroupChatEvent(event)
+end
+
+local function HasPartyBots()
+	for i = 1, partySize() do
+		if botTable[partyName(i)] ~= nil then
+			return true
+		end
+	end
+	return false
+end
+
+-- Real-time ticker (wait() is frame-based and unsuitable for multi-second intervals).
+local partyStatsTicker = CreateFrame("Frame", "MangosbotPartyStatsTicker")
+partyStatsTicker:Hide()
+partyStatsTicker.elapsed = 0
+partyStatsTicker:SetScript("OnUpdate", function()
+	local dt = arg1
+	if dt == nil or dt <= 0 then
+		dt = 0.05
+	end
+	partyStatsTicker.elapsed = partyStatsTicker.elapsed + dt
+	if partyStatsTicker.elapsed < PARTY_STATS_MIN_INTERVAL then
+		return
+	end
+	partyStatsTicker.elapsed = 0
+	if HasPartyBots() then
+		QueryBotPartyStats()
+	else
+		partyStatsTicker:Hide()
+	end
+end)
+
+local function EnsurePartyStatsTicker()
+	if HasPartyBots() then
+		partyStatsTicker:Show()
+	else
+		partyStatsTicker:Hide()
+		partyStatsTicker.elapsed = 0
+	end
+end
+
+local function RequestPartyBotStats()
+	if not HasPartyBots() then
+		EnsurePartyStatsTicker()
+		return
+	end
+	QueryBotPartyStats()
+	EnsurePartyStatsTicker()
+end
+
+-- Chat-frame filters hide protocol text but not floating bubbles (party/raid stats).
+local function FontStringLooksLikeProtocol(text)
+	if text == nil or text == "" then
+		return false
+	end
+	if IsBotProtocolMessage(text) then
+		return true
+	end
+	-- Bubble GetText() can differ slightly from the chat event payload.
+	local plain = NormalizeMessage(text)
+	if string.find(plain, "%d+/%d+ Bag") ~= nil then
+		return true
+	end
+	if string.find(plain, "%%%) Dur") ~= nil then
+		return true
+	end
+	if string.find(plain, " Pwr") ~= nil and string.find(plain, "g") ~= nil then
+		return true
+	end
+	return false
+end
+
+local function FrameHasProtocolFontString(frame, depth)
+	if frame == nil or depth > 3 then
+		return false
+	end
+	if frame.GetRegions ~= nil then
+		local ok, regions = pcall(function()
+			return { frame:GetRegions() }
+		end)
+		if ok and regions ~= nil then
+			for r = 1, table.getn(regions) do
+				local region = regions[r]
+				if region ~= nil and region.GetObjectType ~= nil and region:GetObjectType() == "FontString" then
+					if FontStringLooksLikeProtocol(region:GetText()) then
+						return true
+					end
+				end
+			end
+		end
+	end
+	if frame.GetChildren ~= nil then
+		local ok, children = pcall(function()
+			return { frame:GetChildren() }
+		end)
+		if ok and children ~= nil then
+			for c = 1, table.getn(children) do
+				if FrameHasProtocolFontString(children[c], depth + 1) then
+					return true
+				end
+			end
+		end
+	end
+	return false
+end
+
+local function HideMatchingChatBubbles()
+	if WorldFrame == nil or WorldFrame.GetChildren == nil then
+		return
+	end
+	local ok, children = pcall(function()
+		return { WorldFrame:GetChildren() }
+	end)
+	if not ok or children == nil then
+		return
+	end
+	for i = 1, table.getn(children) do
+		local frame = children[i]
+		if frame ~= nil and frame.IsVisible ~= nil and frame:IsVisible() then
+			if FrameHasProtocolFontString(frame, 0) then
+				frame:Hide()
+			end
+		end
+	end
+end
+
+-- Scan continuously for a short real-time window; bubbles spawn after the chat event.
+local bubbleScanFrame = CreateFrame("Frame", "MangosbotBubbleScan")
+bubbleScanFrame:Hide()
+bubbleScanFrame.remaining = 0
+bubbleScanFrame:SetScript("OnUpdate", function()
+	local dt = arg1
+	if dt == nil or dt <= 0 then
+		dt = 0.03
+	end
+	bubbleScanFrame.remaining = bubbleScanFrame.remaining - dt
+	HideMatchingChatBubbles()
+	if bubbleScanFrame.remaining <= 0 then
+		bubbleScanFrame:Hide()
+	end
+end)
+
+local function SuppressProtocolChatBubbles()
+	-- Cover staggered multi-bot stats replies (0.5s apart, up to 5 bots).
+	bubbleScanFrame.remaining = 4
+	bubbleScanFrame:Show()
+	HideMatchingChatBubbles()
+end
 
 function OnKeyBindingDown(button)
 	local name = GetUnitName("target")
@@ -319,16 +484,36 @@ Mangosbot_EventFrame:SetScript("OnEvent", function()
 			UpdateGroupToolBar()
 			BotRoster:SetWidth(width)
 			BotRoster:SetHeight(y + 22)
+
+			UpdatePartyBotOverlays()
+			RequestPartyBotStats()
 		end
 	end
 
-	if event == "CHAT_MSG_WHISPER" or event == "CHAT_MSG_ADDON" then
+	if event == "PARTY_MEMBERS_CHANGED" then
+		UpdatePartyBotOverlays()
+		RequestPartyBotStats()
+	end
+
+	if IsBotChatEvent(event) then
 		local message, sender = GetChatEventPayload(event, arg1, arg2, arg3, arg4)
 		if message == nil or sender == nil then
 			return
 		end
 
+		-- Stats/strategy replies from grouped bots often arrive as party/raid chat
+		-- (TellPlayer isPrivate=false). Ignore non-bot group chatter.
+		if IsGroupChatEvent(event) then
+			if botTable[sender] == nil and not IsBotProtocolMessage(message) then
+				return
+			end
+			if IsBotProtocolMessage(message) then
+				SuppressProtocolChatBubbles()
+			end
+		end
+
 		OnWhisper(message, sender)
+		UpdatePartyBotOverlays()
 
 		if BotDebugPanel:IsVisible() then
 			UpdateBotDebugPanel(message, sender)
