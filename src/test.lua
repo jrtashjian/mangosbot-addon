@@ -3,30 +3,184 @@
 
 DEFAULT_CHAT_FRAME = { AddMessage = function(_self, s) io.write("CHAT: " .. tostring(s) .. "\n") end }
 UIParent = {}
+RAID_CLASS_COLORS = {}
+GameTooltip = { SetOwner = function() end, SetText = function() end, Show = function() end, Hide = function() end }
+SlashCmdList = SlashCmdList or {}
 
-frames = {}
-function CreateFrame(_kind, _name, _parent, _template)
-    local f = {}
-    function f:SetScript(_k, fn) self.script = fn end
-    frames[#frames + 1] = f
-    return f
+local function stubFontString()
+	return {
+		SetPoint = function() end,
+		SetWidth = function() end,
+		SetHeight = function() end,
+		SetFont = function() end,
+		SetJustifyH = function() end,
+		SetText = function() end,
+		SetTextColor = function() end,
+		GetStringWidth = function()
+			return 40
+		end,
+		Hide = function() end,
+		Show = function() end,
+	}
 end
 
+local function stubTexture()
+	return {
+		SetTexture = function() end,
+		SetAllPoints = function() end,
+		SetPoint = function() end,
+		SetWidth = function() end,
+		SetHeight = function() end,
+		Hide = function() end,
+		Show = function() end,
+	}
+end
+
+frames = {}
+function CreateFrame(_kind, name, _parent, template)
+	local f = {
+		name = name,
+		toolbar = {},
+		buttons = {},
+		items = {},
+		_vis = false,
+	}
+	function f:SetScript(_k, fn)
+		self.script = fn
+	end
+	function f:Hide()
+		f._vis = false
+	end
+	function f:Show()
+		f._vis = true
+	end
+	function f:IsVisible()
+		return f._vis
+	end
+	function f:GetName()
+		return f.name or "anon"
+	end
+	function f:GetWidth()
+		return 100
+	end
+	function f:GetHeight()
+		return 40
+	end
+	function f:GetEffectiveScale()
+		return 1
+	end
+	function f:GetPoint()
+		return "CENTER", nil, "CENTER", 0, 0
+	end
+	function f:CreateFontString()
+		return stubFontString()
+	end
+	function f:CreateTexture()
+		return stubTexture()
+	end
+	local nop = function()
+		return f
+	end
+	f.SetWidth = nop
+	f.SetHeight = nop
+	f.SetPoint = nop
+	f.ClearAllPoints = nop
+	f.EnableMouse = nop
+	f.SetMovable = nop
+	f.SetFrameStrata = nop
+	f.SetBackdropColor = nop
+	f.SetBackdrop = nop
+	f.SetBackdropBorderColor = nop
+	f.RegisterForDrag = nop
+	f.RegisterForClicks = nop
+	f.SetFrameLevel = nop
+	f.EnableMouseWheel = nop
+	f.SetFading = nop
+	f.SetMaxLines = nop
+	f.SetJustifyH = nop
+	f.SetFont = nop
+	f.SetMultiLine = nop
+	f.SetAutoFocus = nop
+	f.SetMaxLetters = nop
+	f.SetScrollChild = nop
+	f.Clear = nop
+	f.AddMessage = nop
+	f.RegisterEvent = nop
+	frames[#frames + 1] = f
+	if name ~= nil then
+		_G[name] = f
+		if template == "UIDropDownMenuTemplate" then
+			_G[name .. "Text"] = stubFontString()
+		end
+	end
+	return f
+end
+
+getglobal = function(name)
+	return _G[name]
+end
 tinsert = table.insert
 tremove = table.remove
 unpack = unpack or table.unpack
-table.getn = table.getn or function(t) return #t end
+table.getn = table.getn or function(t)
+	return #t
+end
+table.concat = table.concat
+	or function(t, sep)
+		sep = sep or ""
+		local out = ""
+		for i = 1, #t do
+			if i > 1 then
+				out = out .. sep
+			end
+			out = out .. tostring(t[i])
+		end
+		return out
+	end
 
-GetNumPartyMembers = function() return 0 end
-GetNumRaidMembers = function() return 0 end
-UnitName = function() return nil end
-GetBuildInfo = function() return "3.3.5", "12340", "Jun 30 2010", 30300 end
+GetNumPartyMembers = function()
+	return 0
+end
+GetNumRaidMembers = function()
+	return 0
+end
+UnitName = function()
+	return nil
+end
+GetUnitName = function()
+	return nil
+end
+UnitClass = function()
+	return nil
+end
+UnitExists = function()
+	return false
+end
+UnitIsEnemy = function()
+	return false
+end
+UnitIsPlayer = function()
+	return false
+end
+GetBuildInfo = function()
+	return "3.3.5", "12340", "Jun 30 2010", 30300
+end
 InviteUnit = function() end
 InviteByName = function() end
 SendChatMessage = function() end
 SendAddonMessage = function() end
+DoEmote = function() end
+HideDropDownMenu = function() end
+ToggleDropDownMenu = function() end
+UIDropDownMenu_Initialize = function() end
+UIDropDownMenu_AddButton = function() end
+GetCursorPosition = function()
+	return 0, 0
+end
 local fakeTime = 1000
-GetTime = function() return fakeTime end
+GetTime = function()
+	return fakeTime
+end
 
 local failures = 0
 local function check(name, cond)
@@ -40,6 +194,8 @@ end
 
 assert(loadfile("../Mangosbot_Core.lua"))()
 assert(loadfile("../Mangosbot_Protocol.lua"))()
+assert(loadfile("../Mangosbot_Commands.lua"))()
+assert(loadfile("../Mangosbot_UI.lua"))()
 
 check("client detects wotlk", GetMangosbotVersion() == 2)
 check("client has addon whisper", GetMangosbotClient().hasAddonWhisper == true)
@@ -261,6 +417,26 @@ SendChatMessage = function() end
 GetNumPartyMembers = function() return 0 end
 GetNumRaidMembers = function() return 0 end
 UnitName = function() return nil end
+
+-- Button state matching (shared by roster group bar + selected panel)
+local matchBot = {
+	strategy = { nc = { "food", "buff" }, co = { "frost", "potions" } },
+	formation = "near",
+	stance = "behind",
+	rti = "skull",
+	rti_cc = "moon",
+	loot = "gray",
+	savemana = "3",
+}
+check("BotHasStrategy finds nc entry", BotHasStrategy(matchBot, "food") == true)
+check("BotHasStrategy finds co entry", BotHasStrategy(matchBot, "frost") == true)
+check("BotHasStrategy misses unknown", BotHasStrategy(matchBot, "tank") == false)
+check("BotButtonIsActive strategy", BotButtonIsActive(matchBot, { strategy = "potions" }) == true)
+check("BotButtonIsActive formation", BotButtonIsActive(matchBot, { formation = "near" }) == true)
+check("BotButtonIsActive stance", BotButtonIsActive(matchBot, { stance = "behind" }) == true)
+check("BotButtonIsActive rti", BotButtonIsActive(matchBot, { rti = "skull" }) == true)
+check("BotButtonIsActive inactive", BotButtonIsActive(matchBot, { strategy = "bear" }) == false)
+check("BotIsInParty false when empty", BotIsInParty("Nobody") == false)
 
 -- Classic client detection
 GetBuildInfo = function() return "1.12.1", "5875", "Sep 19 2006", 11000 end

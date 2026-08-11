@@ -1,3 +1,5 @@
+-- UI: shared primitives, panels, roster/selected refresh, debug, menu, overlays
+
 function ClickToolBarButton(toolbar, button)
 	local btn = ToolBars[toolbar][button]
 	ToolBarButtonOnClick(btn, false)
@@ -128,188 +130,6 @@ function ResizeBotPanel(frame, width, height)
 	end
 end
 
-function CreateBotRoster()
-	local frame = CreateFrame("Frame", "BotRoster", UIParent)
-	frame:Hide()
-	frame:SetWidth(186)
-	frame:SetHeight(175)
-	frame:SetPoint("CENTER", UIParent, "CENTER")
-	frame:EnableMouse(true)
-	frame:SetMovable(true)
-	frame:SetFrameStrata("DIALOG")
-	frame:SetBackdropColor(0, 0, 0, 1.0)
-	frame:SetBackdrop({
-		bgFile = "Interface/DialogFrame/UI-DialogBox-Background",
-		tile = true,
-		tileSize = 16,
-		edgeSize = 0,
-		insets = { left = 0, right = 0, top = 0, bottom = 0 },
-	})
-	frame:SetBackdropBorderColor(0, 0, 0, 1)
-	frame:RegisterForDrag("LeftButton")
-
-	EnablePositionSaving(frame, "BotRoster")
-
-	frame.items = {}
-	for i = 1, 10 do
-		local item = CreateFrame("Frame", "BotRoster_Item" .. i, frame)
-		item:SetPoint("TOPLEFT", frame, "TOPLEFT", i * 100, 0)
-		item:SetWidth(112)
-		item:SetHeight(40)
-		item:SetBackdropColor(0, 0, 0, 1)
-		item:SetBackdrop({
-			bgFile = "Interface/DialogFrame/UI-DialogBox-Background",
-			edgeFile = "Interface/ChatFrame/ChatFrameBackground",
-			tile = true,
-			tileSize = 16,
-			edgeSize = 2,
-			insets = { left = 2, right = 2, top = 2, bottom = 0 },
-		})
-		item:SetBackdropBorderColor(0.8, 0.8, 0.8, 1)
-
-		item.text = item:CreateFontString("BotRoster_ItemHeader" .. i)
-		item.text:SetPoint("TOPLEFT", item, "TOPLEFT", 20, 1)
-		item.text:SetWidth(item:GetWidth())
-		item.text:SetHeight(22)
-		item.text:SetFont("Fonts/FRIZQT__.TTF", 11, "OUTLINE")
-		item.text:SetJustifyH("LEFT")
-		item.text:SetText("Click!")
-
-		local cls = CreateFrame("Button", "BotRoster_ItemHeader" .. i .. "Image", item)
-		cls:SetPoint("TOPLEFT", item, "TOPLEFT", 3, -3)
-		cls:SetWidth(16)
-		cls:SetHeight(16)
-		cls:EnableMouse(true)
-		cls:RegisterForClicks("LeftButtonDown")
-		cls.texture = cls:CreateTexture(nil, "BACKGROUND")
-		cls.texture:SetTexture("Interface\\Addons\\Mangosbot\\Images\\role_dps.tga")
-		cls.texture:SetAllPoints()
-		cls:SetScript("OnEnter", function(_self)
-			GameTooltip:SetOwner(item, "ANCHOR_TOPLEFT", 0, -item:GetHeight() - 40)
-			GameTooltip:SetText("Bot Control Panel")
-			GameTooltip:Show()
-		end)
-		cls:SetScript("OnLeave", function(_self)
-			GameTooltip:Hide()
-		end)
-		item.cls = cls
-
-		CreateToolBar(item, -18, "quickbar" .. i, {
-			["login"] = {
-				icon = "login",
-				command = { [0] = "" },
-				strategy = "",
-				tooltip = "Bring bot online",
-				index = 0,
-			},
-			["logout"] = {
-				icon = "logout",
-				command = { [0] = "" },
-				tooltip = "Logout bot",
-				strategy = "",
-				index = 0,
-			},
-			["invite"] = {
-				icon = "invite",
-				command = { [0] = "" },
-				tooltip = "Invite to your group",
-				strategy = "",
-				index = 1,
-			},
-			["leave"] = {
-				icon = "leave",
-				command = { [0] = "" },
-				tooltip = "Remove from group",
-				strategy = "",
-				index = 1,
-			},
-			["whisper"] = {
-				icon = "whisper",
-				command = { [0] = "" },
-				tooltip = "Start whisper chat",
-				strategy = "",
-				index = 2,
-			},
-			["summon"] = {
-				icon = "summon",
-				command = { [0] = "" },
-				tooltip = "Summon at meeting stone",
-				strategy = "",
-				index = 3,
-			},
-			["menu"] = {
-				icon = "menu",
-				command = { [0] = "" },
-				tooltip = "More...",
-				strategy = "",
-				index = 4,
-			},
-		}, 20, 0, false)
-		local tb = item.toolbar["quickbar" .. i]
-		tb:SetBackdropBorderColor(0, 0, 0, 0.0)
-		tb.buttons["login"]:SetPoint("TOPLEFT", tb, "TOPLEFT", 0, 0)
-		tb.buttons["logout"]:SetPoint("TOPLEFT", tb, "TOPLEFT", 0, 0)
-		tb.buttons["invite"]:SetPoint("TOPLEFT", tb, "TOPLEFT", 16, 0)
-		tb.buttons["leave"]:SetPoint("TOPLEFT", tb, "TOPLEFT", 16, 0)
-		tb.buttons["whisper"]:SetPoint("TOPLEFT", tb, "TOPLEFT", 48, 0)
-		tb.buttons["summon"]:SetPoint("TOPLEFT", tb, "TOPLEFT", 32, 0)
-		tb.buttons["menu"]:SetPoint("TOPLEFT", tb, "TOPLEFT", 64, 0)
-
-		item:Hide()
-		frame.items[i] = item
-		frame.ShowRequest = false
-	end
-
-	CreateToolBar(frame, 0, "quickbar", {
-		["login_all"] = {
-			icon = "login",
-			command = { [0] = "" },
-			strategy = "",
-			tooltip = "Bring all bots online",
-			index = 0,
-		},
-		["logout_all"] = {
-			icon = "logout",
-			command = { [0] = "" },
-			tooltip = "Logout all bots",
-			strategy = "",
-			index = 1,
-		},
-		["invite_all"] = {
-			icon = "invite",
-			command = { [0] = "" },
-			tooltip = "Invite all bots to your group",
-			strategy = "",
-			index = 2,
-		},
-		["leave_all"] = {
-			icon = "leave",
-			command = { [0] = "" },
-			tooltip = "Remove all bots from group",
-			strategy = "",
-			index = 3,
-		},
-	}, 5, 0, false)
-	frame.toolbar["quickbar"]:SetBackdropBorderColor(0, 0, 0, 0.0)
-
-	GroupToolBars["group_movement"] = CreateMovementToolBar(frame, 0, "group_movement", true, 5, 0, false)
-	frame.toolbar["group_movement"]:SetBackdropBorderColor(0, 0, 0, 0.0)
-
-	GroupToolBars["group_formation"] = CreateFormationToolBar(frame, 0, "group_formation", true, 5, 0, false)
-	frame.toolbar["group_formation"]:SetBackdropBorderColor(0, 0, 0, 0.0)
-
-	GroupToolBars["group_savemana"] = CreateSaveManaToolBar(frame, 0, "group_savemana", true, 5, 0, false)
-	frame.toolbar["group_savemana"]:SetBackdropBorderColor(0, 0, 0, 0.0)
-
-	GroupToolBars["group_generic"] = CreateGenericNonCombatToolBar(frame, 0, "group_generic", true, 5, 0, false)
-	frame.toolbar["group_generic"]:SetBackdropBorderColor(0, 0, 0, 0.0)
-
-	GroupToolBars["group_generic_combat"] =
-		CreateGenericCombatToolBar(frame, 0, "group_generic_combat", true, 5, 0, false)
-	frame.toolbar["group_generic_combat"]:SetBackdropBorderColor(0, 0, 0, 0.0)
-
-	return frame
-end
 
 function StartChat()
 	local editBox = getglobal("ChatFrameEditBox")
@@ -320,6 +140,318 @@ function StartChat()
 		name = CurrentBot
 	end
 	editBox:SetText("/w " .. name .. " ")
+end
+
+function SetFrameColor(frame, class)
+	local color = RAID_CLASS_COLORS[class]
+	if color == nil then
+		color = { r = 0.5, g = 0.1, b = 0.7 }
+	end
+	frame:SetBackdropBorderColor(color.r, color.g, color.b, 1.0)
+	frame.header:SetBackdropColor(color.r, color.g, color.b, 1.0)
+	frame.header:SetBackdropBorderColor(color.r, color.g, color.b, 1.0)
+end
+
+local STRATEGY_ENGINES = { "nc", "co", "react", "dead" }
+
+local function BotFieldContains(bot, field, value)
+	return value ~= nil and bot[field] ~= nil and string.find(bot[field], value) ~= nil
+end
+
+function BotHasStrategy(bot, strategyName)
+	if bot == nil or strategyName == nil or bot["strategy"] == nil then
+		return false
+	end
+	for ei = 1, 4 do
+		local elist = bot["strategy"][STRATEGY_ENGINES[ei]]
+		if elist ~= nil then
+			for _, strategy in pairs(elist) do
+				if strategy == strategyName then
+					return true
+				end
+			end
+		end
+	end
+	return false
+end
+
+function BotButtonIsActive(bot, button)
+	if bot == nil or button == nil then
+		return false
+	end
+	if button["strategy"] ~= nil and BotHasStrategy(bot, button["strategy"]) then
+		return true
+	end
+	if BotFieldContains(bot, "formation", button["formation"]) then
+		return true
+	end
+	if BotFieldContains(bot, "stance", button["stance"]) then
+		return true
+	end
+	if BotFieldContains(bot, "rti", button["rti"]) then
+		return true
+	end
+	if BotFieldContains(bot, "rti_cc", button["rti_cc"]) then
+		return true
+	end
+	if BotFieldContains(bot, "loot", button["loot"]) then
+		return true
+	end
+	if BotFieldContains(bot, "savemana", button["savemana"]) then
+		return true
+	end
+	return false
+end
+
+function BotIsInParty(botName)
+	for i = 1, 5 do
+		if partyName(i) == botName then
+			return true
+		end
+	end
+	return false
+end
+
+function UpdateGroupToolBar()
+	for toolbarName, toolbar in pairs(GroupToolBars) do
+		for buttonName, button in pairs(toolbar) do
+			local toggleCount = 0
+			for botName, bot in pairs(botTable) do
+				if BotButtonIsActive(bot, button) and BotIsInParty(botName) then
+					toggleCount = toggleCount + 1
+				end
+			end
+			ToggleButton(BotRoster, toolbarName, buttonName, toggleCount > 0, toggleCount < partySize())
+		end
+	end
+end
+
+local MAX_BOT_DEBUG_LINES = 500
+local BotDebugLog = {}
+
+local function CreateDebugTextButton(parent, name, label, width)
+	local btn = CreateFrame("Button", name, parent)
+	btn:SetWidth(width)
+	btn:SetHeight(18)
+	btn:SetBackdrop({
+		bgFile = "Interface/DialogFrame/UI-DialogBox-Background",
+		edgeFile = "Interface/ChatFrame/ChatFrameBackground",
+		tile = true,
+		tileSize = 16,
+		edgeSize = 1,
+		insets = { left = 0, right = 0, top = 0, bottom = 0 },
+	})
+	btn:SetBackdropColor(0.1, 0.1, 0.1, 1)
+	btn:SetBackdropBorderColor(0.5, 0.1, 0.7, 1)
+	btn:EnableMouse(true)
+	btn:RegisterForClicks("LeftButtonDown")
+	btn.text = btn:CreateFontString(nil, "OVERLAY")
+	btn.text:SetFont("Fonts/FRIZQT__.TTF", 10, "OUTLINE")
+	btn.text:SetPoint("CENTER", btn, "CENTER", 0, 0)
+	btn.text:SetText(label)
+	return btn
+end
+
+local function RefreshBotDebugHeader()
+	if BotDebugPanel == nil or BotDebugPanel.header == nil then
+		return
+	end
+	BotDebugPanel.header.text:SetText("Debug Log (" .. table.getn(BotDebugLog) .. ")  >> send  << recv")
+end
+
+function ClearBotDebugLog()
+	BotDebugLog = {}
+	if BotDebugPanel ~= nil and BotDebugPanel.scroll ~= nil then
+		BotDebugPanel.scroll:Clear()
+	end
+	RefreshBotDebugHeader()
+end
+
+function ShowBotDebugCopyFrame()
+	local f = BotDebugCopyFrame
+	if f == nil then
+		f = CreateFrame("Frame", "BotDebugCopyFrame", UIParent)
+		f:SetWidth(520)
+		f:SetHeight(360)
+		f:SetPoint("CENTER", UIParent, "CENTER")
+		f:SetFrameStrata("FULLSCREEN_DIALOG")
+		f:EnableMouse(true)
+		f:SetMovable(true)
+		f:RegisterForDrag("LeftButton")
+		f:SetScript("OnMouseDown", function()
+			this:StartMoving()
+		end)
+		f:SetScript("OnMouseUp", function()
+			this:StopMovingOrSizing()
+		end)
+		f:SetBackdrop({
+			bgFile = "Interface/DialogFrame/UI-DialogBox-Background",
+			edgeFile = "Interface/ChatFrame/ChatFrameBackground",
+			tile = true,
+			tileSize = 16,
+			edgeSize = 2,
+			insets = { left = 0, right = 0, top = 0, bottom = 0 },
+		})
+		f:SetBackdropColor(0, 0, 0, 1)
+		f:SetBackdropBorderColor(0.5, 0.1, 0.7, 1)
+
+		f.title = f:CreateFontString(nil, "OVERLAY")
+		f.title:SetFont("Fonts/FRIZQT__.TTF", 11, "OUTLINE")
+		f.title:SetPoint("TOP", f, "TOP", 0, -8)
+		f.title:SetText("Press Ctrl+C to copy, Escape to close")
+
+		local scroll = CreateFrame("ScrollFrame", "BotDebugCopyScroll", f)
+		scroll:SetPoint("TOPLEFT", f, "TOPLEFT", 10, -28)
+		scroll:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -10, 10)
+
+		local edit = CreateFrame("EditBox", "BotDebugCopyEdit", scroll)
+		edit:SetMultiLine(true)
+		edit:SetAutoFocus(true)
+		edit:SetFont("Fonts/FRIZQT__.TTF", 11)
+		edit:SetWidth(500)
+		edit:SetMaxLetters(999999)
+		edit:SetScript("OnEscapePressed", function()
+			this:ClearFocus()
+			f:Hide()
+		end)
+		edit:SetScript("OnTextChanged", function()
+			scroll:UpdateScrollChildRect()
+		end)
+		scroll:SetScrollChild(edit)
+		f.edit = edit
+		f.scroll = scroll
+		BotDebugCopyFrame = f
+	end
+
+	local text = table.concat(BotDebugLog, "\n")
+	if text == nil or text == "" then
+		text = "(no messages yet)"
+	end
+	f.edit:SetText(text)
+	f.edit:SetFocus()
+	f.edit:HighlightText()
+	f:Show()
+end
+
+function BotDebugLogMessage(direction, message, peer)
+	if BotDebugPanel == nil or not BotDebugPanel:IsVisible() then
+		return
+	end
+	if message == nil then
+		message = ""
+	end
+
+	local ts = ""
+	if date then
+		ts = date("%H:%M:%S") .. " "
+	end
+
+	local peerPart = ""
+	if peer ~= nil and peer ~= "" then
+		peerPart = " [" .. tostring(peer) .. "]"
+	end
+
+	local line = ts .. direction .. peerPart .. " " .. tostring(message)
+	table.insert(BotDebugLog, line)
+	while table.getn(BotDebugLog) > MAX_BOT_DEBUG_LINES do
+		tremove(BotDebugLog, 1)
+	end
+
+	if BotDebugPanel.scroll ~= nil then
+		local r, g, b = 0.9, 0.9, 0.9
+		if direction == ">>" then
+			r, g, b = 1.0, 0.82, 0.0
+		elseif direction == "<<" then
+			r, g, b = 0.55, 0.8, 1.0
+		elseif direction == "sys" then
+			r, g, b = 0.4, 1.0, 0.4
+		end
+		BotDebugPanel.scroll:AddMessage(line, r, g, b)
+	end
+	RefreshBotDebugHeader()
+end
+
+function CreateBotDebugPanel()
+	local frame = CreateFrame("Frame", "BotDebugPanel", UIParent)
+	frame:Hide()
+	frame:SetWidth(480)
+	frame:SetHeight(320)
+	frame:SetPoint("CENTER", UIParent, "CENTER")
+	frame:EnableMouse(true)
+	frame:SetMovable(true)
+	frame:SetFrameStrata("DIALOG")
+	frame:SetBackdropColor(0, 0, 0, 1.0)
+	frame:SetBackdrop({
+		bgFile = "Interface/DialogFrame/UI-DialogBox-Background",
+		edgeFile = "Interface/ChatFrame/ChatFrameBackground",
+		tile = true,
+		tileSize = 16,
+		edgeSize = 2,
+		insets = { left = 0, right = 0, top = 0, bottom = 0 },
+	})
+	frame:SetBackdropBorderColor(0.5, 0.1, 0.7, 1)
+	frame:RegisterForDrag("LeftButton")
+
+	frame.header = CreateFrame("Frame", "BotDebugPanelHeader", frame)
+	frame.header:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, 0)
+	frame.header:SetWidth(frame:GetWidth())
+	frame.header:SetHeight(22)
+	frame.header:SetBackdropColor(0.5, 0.1, 0.7, 1)
+	frame.header:SetBackdrop({
+		bgFile = "Interface/DialogFrame/UI-DialogBox-Background",
+		edgeFile = "Interface/ChatFrame/ChatFrameBackground",
+		tile = true,
+		tileSize = 16,
+		edgeSize = 0,
+		insets = { left = 2, right = 2, top = 2, bottom = 0 },
+	})
+	frame.header:SetBackdropBorderColor(0.5, 0.1, 0.7, 1)
+
+	frame.header.text = frame.header:CreateFontString("BotDebugPanelHeaderText")
+	frame.header.text:SetPoint("TOPLEFT", frame.header, "TOPLEFT", 6, 0)
+	frame.header.text:SetWidth(frame.header:GetWidth() - 200)
+	frame.header.text:SetHeight(22)
+	frame.header.text:SetFont("Fonts/FRIZQT__.TTF", 11, "OUTLINE")
+	frame.header.text:SetJustifyH("LEFT")
+	frame.header.text:SetText("Debug Log")
+
+	local copyBtn = CreateDebugTextButton(frame.header, "BotDebugCopyBtn", "Copy", 50)
+	copyBtn:SetPoint("TOPRIGHT", frame.header, "TOPRIGHT", -58, -2)
+	copyBtn:SetScript("OnClick", function()
+		ShowBotDebugCopyFrame()
+	end)
+
+	local clearBtn = CreateDebugTextButton(frame.header, "BotDebugClearBtn", "Clear", 50)
+	clearBtn:SetPoint("TOPRIGHT", frame.header, "TOPRIGHT", -4, -2)
+	clearBtn:SetScript("OnClick", function()
+		ClearBotDebugLog()
+	end)
+
+	local scroll = CreateFrame("ScrollingMessageFrame", "BotDebugScroll", frame)
+	scroll:SetPoint("TOPLEFT", frame, "TOPLEFT", 6, -26)
+	scroll:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -6, 6)
+	scroll:SetFont("Fonts/FRIZQT__.TTF", 11)
+	scroll:SetJustifyH("LEFT")
+	scroll:SetFading(false)
+	scroll:SetMaxLines(MAX_BOT_DEBUG_LINES)
+	scroll:EnableMouseWheel(true)
+	scroll:SetScript("OnMouseWheel", function()
+		if arg1 > 0 then
+			this:ScrollUp()
+		elseif arg1 < 0 then
+			this:ScrollDown()
+		end
+	end)
+	frame.scroll = scroll
+
+	EnablePositionSaving(frame, "BotDebugPanel")
+
+	return frame
+end
+
+function UpdateBotDebugPanel(message, sender)
+	BotDebugLogMessage("<<", message, sender)
+
 end
 
 function CreateSelectedBotPanel()
@@ -1112,166 +1244,75 @@ function CreateSelectedBotPanel()
 	return frame
 end
 
-function SetFrameColor(frame, class)
-	local color = RAID_CLASS_COLORS[class]
-	if color == nil then
-		color = { r = 0.5, g = 0.1, b = 0.7 }
+function ResolveSelectedBotClass(bot)
+	local class = "UNKNOWN"
+	if bot["class"] ~= nil then
+		class = ClassToken(bot["class"])
 	end
-	frame:SetBackdropBorderColor(color.r, color.g, color.b, 1.0)
-	frame.header:SetBackdropColor(color.r, color.g, color.b, 1.0)
-	frame.header:SetBackdropBorderColor(color.r, color.g, color.b, 1.0)
-end
-
-local MAX_BOT_DEBUG_LINES = 500
-local BotDebugLog = {}
-
-local function CreateDebugTextButton(parent, name, label, width)
-	local btn = CreateFrame("Button", name, parent)
-	btn:SetWidth(width)
-	btn:SetHeight(18)
-	btn:SetBackdrop({
-		bgFile = "Interface/DialogFrame/UI-DialogBox-Background",
-		edgeFile = "Interface/ChatFrame/ChatFrameBackground",
-		tile = true,
-		tileSize = 16,
-		edgeSize = 1,
-		insets = { left = 0, right = 0, top = 0, bottom = 0 },
-	})
-	btn:SetBackdropColor(0.1, 0.1, 0.1, 1)
-	btn:SetBackdropBorderColor(0.5, 0.1, 0.7, 1)
-	btn:EnableMouse(true)
-	btn:RegisterForClicks("LeftButtonDown")
-	btn.text = btn:CreateFontString(nil, "OVERLAY")
-	btn.text:SetFont("Fonts/FRIZQT__.TTF", 10, "OUTLINE")
-	btn.text:SetPoint("CENTER", btn, "CENTER", 0, 0)
-	btn.text:SetText(label)
-	return btn
-end
-
-local function RefreshBotDebugHeader()
-	if BotDebugPanel == nil or BotDebugPanel.header == nil then
-		return
-	end
-	BotDebugPanel.header.text:SetText("Debug Log (" .. table.getn(BotDebugLog) .. ")  >> send  << recv")
-end
-
-function ClearBotDebugLog()
-	BotDebugLog = {}
-	if BotDebugPanel ~= nil and BotDebugPanel.scroll ~= nil then
-		BotDebugPanel.scroll:Clear()
-	end
-	RefreshBotDebugHeader()
-end
-
-function ShowBotDebugCopyFrame()
-	local f = BotDebugCopyFrame
-	if f == nil then
-		f = CreateFrame("Frame", "BotDebugCopyFrame", UIParent)
-		f:SetWidth(520)
-		f:SetHeight(360)
-		f:SetPoint("CENTER", UIParent, "CENTER")
-		f:SetFrameStrata("FULLSCREEN_DIALOG")
-		f:EnableMouse(true)
-		f:SetMovable(true)
-		f:RegisterForDrag("LeftButton")
-		f:SetScript("OnMouseDown", function()
-			this:StartMoving()
-		end)
-		f:SetScript("OnMouseUp", function()
-			this:StopMovingOrSizing()
-		end)
-		f:SetBackdrop({
-			bgFile = "Interface/DialogFrame/UI-DialogBox-Background",
-			edgeFile = "Interface/ChatFrame/ChatFrameBackground",
-			tile = true,
-			tileSize = 16,
-			edgeSize = 2,
-			insets = { left = 0, right = 0, top = 0, bottom = 0 },
-		})
-		f:SetBackdropColor(0, 0, 0, 1)
-		f:SetBackdropBorderColor(0.5, 0.1, 0.7, 1)
-
-		f.title = f:CreateFontString(nil, "OVERLAY")
-		f.title:SetFont("Fonts/FRIZQT__.TTF", 11, "OUTLINE")
-		f.title:SetPoint("TOP", f, "TOP", 0, -8)
-		f.title:SetText("Press Ctrl+C to copy, Escape to close")
-
-		local scroll = CreateFrame("ScrollFrame", "BotDebugCopyScroll", f)
-		scroll:SetPoint("TOPLEFT", f, "TOPLEFT", 10, -28)
-		scroll:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -10, 10)
-
-		local edit = CreateFrame("EditBox", "BotDebugCopyEdit", scroll)
-		edit:SetMultiLine(true)
-		edit:SetAutoFocus(true)
-		edit:SetFont("Fonts/FRIZQT__.TTF", 11)
-		edit:SetWidth(500)
-		edit:SetMaxLetters(999999)
-		edit:SetScript("OnEscapePressed", function()
-			this:ClearFocus()
-			f:Hide()
-		end)
-		edit:SetScript("OnTextChanged", function()
-			scroll:UpdateScrollChildRect()
-		end)
-		scroll:SetScrollChild(edit)
-		f.edit = edit
-		f.scroll = scroll
-		BotDebugCopyFrame = f
-	end
-
-	local text = table.concat(BotDebugLog, "\n")
-	if text == nil or text == "" then
-		text = "(no messages yet)"
-	end
-	f.edit:SetText(text)
-	f.edit:SetFocus()
-	f.edit:HighlightText()
-	f:Show()
-end
-
-function BotDebugLogMessage(direction, message, peer)
-	if BotDebugPanel == nil or not BotDebugPanel:IsVisible() then
-		return
-	end
-	if message == nil then
-		message = ""
-	end
-
-	local ts = ""
-	if date then
-		ts = date("%H:%M:%S") .. " "
-	end
-
-	local peerPart = ""
-	if peer ~= nil and peer ~= "" then
-		peerPart = " [" .. tostring(peer) .. "]"
-	end
-
-	local line = ts .. direction .. peerPart .. " " .. tostring(message)
-	table.insert(BotDebugLog, line)
-	while table.getn(BotDebugLog) > MAX_BOT_DEBUG_LINES do
-		tremove(BotDebugLog, 1)
-	end
-
-	if BotDebugPanel.scroll ~= nil then
-		local r, g, b = 0.9, 0.9, 0.9
-		if direction == ">>" then
-			r, g, b = 1.0, 0.82, 0.0
-		elseif direction == "<<" then
-			r, g, b = 0.55, 0.8, 1.0
-		elseif direction == "sys" then
-			r, g, b = 0.4, 1.0, 0.4
+	if GetUnitName("target") ~= nil then
+		local _, unitClass = UnitClass("target")
+		if unitClass ~= nil then
+			class = unitClass
 		end
-		BotDebugPanel.scroll:AddMessage(line, r, g, b)
 	end
-	RefreshBotDebugHeader()
+	return class
 end
 
-function CreateBotDebugPanel()
-	local frame = CreateFrame("Frame", "BotDebugPanel", UIParent)
+function RefreshSelectedBotPanel(sender)
+	local bot = botTable[sender]
+	if bot == nil or bot["strategy"] == nil or bot["role"] == nil then
+		SelectedBotPanel:Hide()
+		return
+	end
+
+	local selected = GetUnitName("target")
+	if CurrentBot ~= nil then
+		selected = CurrentBot
+	end
+	if sender ~= selected then
+		return
+	end
+
+	SelectedBotPanel:Show()
+	local class = ResolveSelectedBotClass(bot)
+	SetFrameColor(SelectedBotPanel, class)
+	SelectedBotPanel.header.role.texture:SetTexture(
+		"Interface\\Addons\\Mangosbot\\Images\\role_" .. bot["role"] .. ".tga"
+	)
+	SelectedBotPanel.header.text:SetText(sender)
+
+	local width = 0
+	local height = 0
+	for toolbarName, toolbar in pairs(ToolBars) do
+		local panelVisible = true
+		if string.find(toolbarName, "CLASS_") == 1 then
+			if string.find(string.sub(toolbarName, 7), class) == 1 then
+				SelectedBotPanel.toolbar[toolbarName]:Show()
+			else
+				SelectedBotPanel.toolbar[toolbarName]:Hide()
+				panelVisible = false
+			end
+		end
+		local numButtons = 0
+		for buttonName, button in pairs(toolbar) do
+			ToggleButton(SelectedBotPanel, toolbarName, buttonName, BotButtonIsActive(bot, button))
+			numButtons = numButtons + 1
+		end
+		if panelVisible then
+			height = height + 1
+			if width < numButtons then
+				width = numButtons
+			end
+		end
+	end
+	ResizeBotPanel(SelectedBotPanel, width * 25 + 20, height * 25 + 25)
+end
+
+function CreateBotRoster()
+	local frame = CreateFrame("Frame", "BotRoster", UIParent)
 	frame:Hide()
-	frame:SetWidth(480)
-	frame:SetHeight(320)
+	frame:SetWidth(186)
+	frame:SetHeight(175)
 	frame:SetPoint("CENTER", UIParent, "CENTER")
 	frame:EnableMouse(true)
 	frame:SetMovable(true)
@@ -1279,74 +1320,457 @@ function CreateBotDebugPanel()
 	frame:SetBackdropColor(0, 0, 0, 1.0)
 	frame:SetBackdrop({
 		bgFile = "Interface/DialogFrame/UI-DialogBox-Background",
-		edgeFile = "Interface/ChatFrame/ChatFrameBackground",
-		tile = true,
-		tileSize = 16,
-		edgeSize = 2,
-		insets = { left = 0, right = 0, top = 0, bottom = 0 },
-	})
-	frame:SetBackdropBorderColor(0.5, 0.1, 0.7, 1)
-	frame:RegisterForDrag("LeftButton")
-
-	frame.header = CreateFrame("Frame", "BotDebugPanelHeader", frame)
-	frame.header:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, 0)
-	frame.header:SetWidth(frame:GetWidth())
-	frame.header:SetHeight(22)
-	frame.header:SetBackdropColor(0.5, 0.1, 0.7, 1)
-	frame.header:SetBackdrop({
-		bgFile = "Interface/DialogFrame/UI-DialogBox-Background",
-		edgeFile = "Interface/ChatFrame/ChatFrameBackground",
 		tile = true,
 		tileSize = 16,
 		edgeSize = 0,
-		insets = { left = 2, right = 2, top = 2, bottom = 0 },
+		insets = { left = 0, right = 0, top = 0, bottom = 0 },
 	})
-	frame.header:SetBackdropBorderColor(0.5, 0.1, 0.7, 1)
+	frame:SetBackdropBorderColor(0, 0, 0, 1)
+	frame:RegisterForDrag("LeftButton")
 
-	frame.header.text = frame.header:CreateFontString("BotDebugPanelHeaderText")
-	frame.header.text:SetPoint("TOPLEFT", frame.header, "TOPLEFT", 6, 0)
-	frame.header.text:SetWidth(frame.header:GetWidth() - 200)
-	frame.header.text:SetHeight(22)
-	frame.header.text:SetFont("Fonts/FRIZQT__.TTF", 11, "OUTLINE")
-	frame.header.text:SetJustifyH("LEFT")
-	frame.header.text:SetText("Debug Log")
+	EnablePositionSaving(frame, "BotRoster")
 
-	local copyBtn = CreateDebugTextButton(frame.header, "BotDebugCopyBtn", "Copy", 50)
-	copyBtn:SetPoint("TOPRIGHT", frame.header, "TOPRIGHT", -58, -2)
-	copyBtn:SetScript("OnClick", function()
-		ShowBotDebugCopyFrame()
-	end)
+	frame.items = {}
+	for i = 1, 10 do
+		local item = CreateFrame("Frame", "BotRoster_Item" .. i, frame)
+		item:SetPoint("TOPLEFT", frame, "TOPLEFT", i * 100, 0)
+		item:SetWidth(112)
+		item:SetHeight(40)
+		item:SetBackdropColor(0, 0, 0, 1)
+		item:SetBackdrop({
+			bgFile = "Interface/DialogFrame/UI-DialogBox-Background",
+			edgeFile = "Interface/ChatFrame/ChatFrameBackground",
+			tile = true,
+			tileSize = 16,
+			edgeSize = 2,
+			insets = { left = 2, right = 2, top = 2, bottom = 0 },
+		})
+		item:SetBackdropBorderColor(0.8, 0.8, 0.8, 1)
 
-	local clearBtn = CreateDebugTextButton(frame.header, "BotDebugClearBtn", "Clear", 50)
-	clearBtn:SetPoint("TOPRIGHT", frame.header, "TOPRIGHT", -4, -2)
-	clearBtn:SetScript("OnClick", function()
-		ClearBotDebugLog()
-	end)
+		item.text = item:CreateFontString("BotRoster_ItemHeader" .. i)
+		item.text:SetPoint("TOPLEFT", item, "TOPLEFT", 20, 1)
+		item.text:SetWidth(item:GetWidth())
+		item.text:SetHeight(22)
+		item.text:SetFont("Fonts/FRIZQT__.TTF", 11, "OUTLINE")
+		item.text:SetJustifyH("LEFT")
+		item.text:SetText("Click!")
 
-	local scroll = CreateFrame("ScrollingMessageFrame", "BotDebugScroll", frame)
-	scroll:SetPoint("TOPLEFT", frame, "TOPLEFT", 6, -26)
-	scroll:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -6, 6)
-	scroll:SetFont("Fonts/FRIZQT__.TTF", 11)
-	scroll:SetJustifyH("LEFT")
-	scroll:SetFading(false)
-	scroll:SetMaxLines(MAX_BOT_DEBUG_LINES)
-	scroll:EnableMouseWheel(true)
-	scroll:SetScript("OnMouseWheel", function()
-		if arg1 > 0 then
-			this:ScrollUp()
-		elseif arg1 < 0 then
-			this:ScrollDown()
-		end
-	end)
-	frame.scroll = scroll
+		local cls = CreateFrame("Button", "BotRoster_ItemHeader" .. i .. "Image", item)
+		cls:SetPoint("TOPLEFT", item, "TOPLEFT", 3, -3)
+		cls:SetWidth(16)
+		cls:SetHeight(16)
+		cls:EnableMouse(true)
+		cls:RegisterForClicks("LeftButtonDown")
+		cls.texture = cls:CreateTexture(nil, "BACKGROUND")
+		cls.texture:SetTexture("Interface\\Addons\\Mangosbot\\Images\\role_dps.tga")
+		cls.texture:SetAllPoints()
+		cls:SetScript("OnEnter", function(_self)
+			GameTooltip:SetOwner(item, "ANCHOR_TOPLEFT", 0, -item:GetHeight() - 40)
+			GameTooltip:SetText("Bot Control Panel")
+			GameTooltip:Show()
+		end)
+		cls:SetScript("OnLeave", function(_self)
+			GameTooltip:Hide()
+		end)
+		item.cls = cls
 
-	EnablePositionSaving(frame, "BotDebugPanel")
+		CreateToolBar(item, -18, "quickbar" .. i, {
+			["login"] = {
+				icon = "login",
+				command = { [0] = "" },
+				strategy = "",
+				tooltip = "Bring bot online",
+				index = 0,
+			},
+			["logout"] = {
+				icon = "logout",
+				command = { [0] = "" },
+				tooltip = "Logout bot",
+				strategy = "",
+				index = 0,
+			},
+			["invite"] = {
+				icon = "invite",
+				command = { [0] = "" },
+				tooltip = "Invite to your group",
+				strategy = "",
+				index = 1,
+			},
+			["leave"] = {
+				icon = "leave",
+				command = { [0] = "" },
+				tooltip = "Remove from group",
+				strategy = "",
+				index = 1,
+			},
+			["whisper"] = {
+				icon = "whisper",
+				command = { [0] = "" },
+				tooltip = "Start whisper chat",
+				strategy = "",
+				index = 2,
+			},
+			["summon"] = {
+				icon = "summon",
+				command = { [0] = "" },
+				tooltip = "Summon at meeting stone",
+				strategy = "",
+				index = 3,
+			},
+			["menu"] = {
+				icon = "menu",
+				command = { [0] = "" },
+				tooltip = "More...",
+				strategy = "",
+				index = 4,
+			},
+		}, 20, 0, false)
+		local tb = item.toolbar["quickbar" .. i]
+		tb:SetBackdropBorderColor(0, 0, 0, 0.0)
+		tb.buttons["login"]:SetPoint("TOPLEFT", tb, "TOPLEFT", 0, 0)
+		tb.buttons["logout"]:SetPoint("TOPLEFT", tb, "TOPLEFT", 0, 0)
+		tb.buttons["invite"]:SetPoint("TOPLEFT", tb, "TOPLEFT", 16, 0)
+		tb.buttons["leave"]:SetPoint("TOPLEFT", tb, "TOPLEFT", 16, 0)
+		tb.buttons["whisper"]:SetPoint("TOPLEFT", tb, "TOPLEFT", 48, 0)
+		tb.buttons["summon"]:SetPoint("TOPLEFT", tb, "TOPLEFT", 32, 0)
+		tb.buttons["menu"]:SetPoint("TOPLEFT", tb, "TOPLEFT", 64, 0)
+
+		item:Hide()
+		item.rosterIndex = i
+		frame.items[i] = item
+		frame.ShowRequest = false
+	end
+
+	CreateToolBar(frame, 0, "quickbar", {
+		["login_all"] = {
+			icon = "login",
+			command = { [0] = "" },
+			strategy = "",
+			tooltip = "Bring all bots online",
+			index = 0,
+		},
+		["logout_all"] = {
+			icon = "logout",
+			command = { [0] = "" },
+			tooltip = "Logout all bots",
+			strategy = "",
+			index = 1,
+		},
+		["invite_all"] = {
+			icon = "invite",
+			command = { [0] = "" },
+			tooltip = "Invite all bots to your group",
+			strategy = "",
+			index = 2,
+		},
+		["leave_all"] = {
+			icon = "leave",
+			command = { [0] = "" },
+			tooltip = "Remove all bots from group",
+			strategy = "",
+			index = 3,
+		},
+	}, 5, 0, false)
+	frame.toolbar["quickbar"]:SetBackdropBorderColor(0, 0, 0, 0.0)
+
+	GroupToolBars["group_movement"] = CreateMovementToolBar(frame, 0, "group_movement", true, 5, 0, false)
+	frame.toolbar["group_movement"]:SetBackdropBorderColor(0, 0, 0, 0.0)
+
+	GroupToolBars["group_formation"] = CreateFormationToolBar(frame, 0, "group_formation", true, 5, 0, false)
+	frame.toolbar["group_formation"]:SetBackdropBorderColor(0, 0, 0, 0.0)
+
+	GroupToolBars["group_savemana"] = CreateSaveManaToolBar(frame, 0, "group_savemana", true, 5, 0, false)
+	frame.toolbar["group_savemana"]:SetBackdropBorderColor(0, 0, 0, 0.0)
+
+	GroupToolBars["group_generic"] = CreateGenericNonCombatToolBar(frame, 0, "group_generic", true, 5, 0, false)
+	frame.toolbar["group_generic"]:SetBackdropBorderColor(0, 0, 0, 0.0)
+
+	GroupToolBars["group_generic_combat"] =
+		CreateGenericCombatToolBar(frame, 0, "group_generic_combat", true, 5, 0, false)
+	frame.toolbar["group_generic_combat"]:SetBackdropBorderColor(0, 0, 0, 0.0)
 
 	return frame
 end
 
-function UpdateBotDebugPanel(message, sender)
-	BotDebugLogMessage("<<", message, sender)
+local function SetRosterItemHandlers(item, key)
+	local quickbar = item.toolbar["quickbar" .. item.rosterIndex]
+	local loginBtn = quickbar.buttons["login"]
+	local logoutBtn = quickbar.buttons["logout"]
+	local inviteBtn = quickbar.buttons["invite"]
+	local leaveBtn = quickbar.buttons["leave"]
+	local whisperBtn = quickbar.buttons["whisper"]
+	local summonBtn = quickbar.buttons["summon"]
+	local menuBtn = quickbar.buttons["menu"]
+
+	item.cls["key"] = key
+	item.cls:SetScript("OnClick", function()
+		if CurrentBot == item.cls["key"] then
+			CurrentBot = nil
+			SelectedBotPanel:Hide()
+		else
+			CurrentBot = item.cls["key"]
+			QuerySelectedBot(CurrentBot)
+		end
+	end)
+
+	loginBtn["key"] = key
+	loginBtn:SetScript("OnClick", function()
+		SendBotCommand(".bot add " .. loginBtn["key"], "SAY")
+	end)
+	logoutBtn["key"] = key
+	logoutBtn:SetScript("OnClick", function()
+		SendBotCommand(".bot rm " .. logoutBtn["key"], "SAY")
+	end)
+	inviteBtn["key"] = key
+	inviteBtn:SetScript("OnClick", function()
+		MB_Invite(inviteBtn["key"])
+	end)
+	leaveBtn["key"] = key
+	leaveBtn:SetScript("OnClick", function()
+		SendBotCommand("leave", "WHISPER", nil, leaveBtn["key"])
+	end)
+	whisperBtn["key"] = key
+	whisperBtn:SetScript("OnClick", function()
+		local editBox = getglobal("ChatFrameEditBox")
+		editBox:Show()
+		editBox:SetFocus()
+		editBox:SetText("/w " .. whisperBtn["key"] .. " ")
+	end)
+	summonBtn["key"] = key
+	summonBtn:SetScript("OnClick", function()
+		SendBotCommand("summon", "WHISPER", nil, summonBtn["key"])
+	end)
+	menuBtn["key"] = key
+	menuBtn:SetScript("OnClick", function()
+		OpenDropDownMenu(menuBtn["key"])
+	end)
+end
+
+local function ApplyRosterItemState(item, key, bot)
+	local quickbar = item.toolbar["quickbar" .. item.rosterIndex]
+	local loginBtn = quickbar.buttons["login"]
+	local logoutBtn = quickbar.buttons["logout"]
+	local inviteBtn = quickbar.buttons["invite"]
+	local leaveBtn = quickbar.buttons["leave"]
+	local whisperBtn = quickbar.buttons["whisper"]
+	local summonBtn = quickbar.buttons["summon"]
+	local menuBtn = quickbar.buttons["menu"]
+
+	item.text:SetText(key)
+
+	if bot["class"] ~= nil then
+		local clsKey = string.lower(bot["class"])
+		item.cls.texture:SetTexture("Interface\\Addons\\Mangosbot\\Images\\cls_" .. clsKey .. ".tga")
+		local color = RAID_CLASS_COLORS[ClassToken(bot["class"])]
+		if color ~= nil then
+			item.text:SetTextColor(color.r, color.g, color.b, 1.0)
+		end
+	end
+
+	loginBtn:Hide()
+	logoutBtn:Hide()
+	inviteBtn:Show()
+	leaveBtn:Hide()
+	whisperBtn:Hide()
+	summonBtn:Hide()
+	menuBtn:Hide()
+
+	local inParty = false
+	if bot["online"] then
+		item:SetBackdropBorderColor(0.6, 0.6, 0.2, 1.0)
+		logoutBtn:Show()
+		whisperBtn:Show()
+		summonBtn:Show()
+		menuBtn:Show()
+		if BotIsInParty(key) then
+			inviteBtn:Hide()
+			leaveBtn:Show()
+			inParty = true
+			item:SetBackdropBorderColor(0.2, 0.8, 0.8, 1.0)
+		end
+	else
+		item:SetBackdropBorderColor(0.2, 0.2, 0.2, 1)
+		loginBtn:Show()
+		inviteBtn:Hide()
+	end
+
+	SetRosterItemHandlers(item, key)
+	item:Show()
+	return inParty, bot["online"] == true
+end
+
+local function LayoutRosterBulkActions(y, allBots, flags)
+	local tb = BotRoster.toolbar["quickbar"]
+	tb:SetPoint("TOPLEFT", BotRoster, "TOPLEFT", 5, -y)
+	local x = 0
+
+	local loginAllBtn = tb.buttons["login_all"]
+	loginAllBtn:SetPoint("TOPLEFT", tb, "TOPLEFT", x, 0)
+	if not flags.allLoggedIn then
+		loginAllBtn:Show()
+		x = x + 16
+	else
+		loginAllBtn:Hide()
+	end
+	loginAllBtn["allBots"] = allBots
+	loginAllBtn:SetScript("OnClick", function()
+		SendBotCommand(".bot add " .. loginAllBtn["allBots"], "SAY")
+	end)
+
+	local logoutAllBtn = tb.buttons["logout_all"]
+	logoutAllBtn:SetPoint("TOPLEFT", tb, "TOPLEFT", x, 0)
+	if not flags.allLoggedOut then
+		logoutAllBtn:Show()
+		x = x + 16
+	else
+		logoutAllBtn:Hide()
+	end
+	logoutAllBtn["allBots"] = allBots
+	logoutAllBtn:SetScript("OnClick", function()
+		SendBotCommand(".bot rm " .. logoutAllBtn["allBots"], "SAY")
+	end)
+
+	local inviteAllBtn = tb.buttons["invite_all"]
+	inviteAllBtn:SetPoint("TOPLEFT", tb, "TOPLEFT", x, 0)
+	if not flags.allInParty then
+		inviteAllBtn:Show()
+		x = x + 16
+	else
+		inviteAllBtn:Hide()
+	end
+	inviteAllBtn:SetScript("OnClick", function()
+		local timeout = 0.1
+		for key in pairs(botTable) do
+			wait(timeout, function(botName)
+				MB_Invite(botName)
+			end, key)
+			timeout = timeout + 0.1
+		end
+		wait(1, function()
+			SendBotCommand(".bot list", "SAY")
+		end)
+	end)
+
+	local leaveAllBtn = tb.buttons["leave_all"]
+	leaveAllBtn:SetPoint("TOPLEFT", tb, "TOPLEFT", x, 0)
+	if flags.anyInParty then
+		leaveAllBtn:Show()
+	else
+		leaveAllBtn:Hide()
+	end
+	leaveAllBtn:SetScript("OnClick", function()
+		local timeout = 0.1
+		for key in pairs(botTable) do
+			wait(timeout, function(botName)
+				SendBotCommand("leave", "WHISPER", nil, botName)
+			end, key)
+			timeout = timeout + 0.1
+		end
+	end)
+end
+
+local GROUP_TOOLBAR_NAMES = {
+	"group_formation",
+	"group_movement",
+	"group_savemana",
+	"group_generic",
+	"group_generic_combat",
+}
+
+local function LayoutRosterGroupToolBars(y, show)
+	for i = 1, 5 do
+		local tb = BotRoster.toolbar[GROUP_TOOLBAR_NAMES[i]]
+		if show then
+			tb:Show()
+			y = y + 22
+			tb:SetPoint("TOPLEFT", BotRoster, "TOPLEFT", 5, -y)
+		else
+			tb:Hide()
+		end
+	end
+	return y
+end
+
+function RefreshBotRoster()
+	if BotRoster.ShowRequest then
+		BotRoster:Show()
+		BotRoster.ShowRequest = false
+	end
+
+	for i = 1, 10 do
+		BotRoster.items[i]:Hide()
+	end
+
+	local index = 1
+	local x = 5
+	local width = 0
+	local height = 0
+	local y = 5
+	local colCount = 2
+	local allBots = ""
+	local first = true
+	local flags = {
+		allLoggedIn = true,
+		allLoggedOut = true,
+		allInParty = true,
+		anyInParty = false,
+	}
+
+	for key, bot in pairs(botTable) do
+		if index > 10 then
+			index = 1
+			y = 5
+		end
+
+		local item = BotRoster.items[index]
+		if first then
+			first = false
+		else
+			allBots = allBots .. ","
+		end
+		allBots = allBots .. key
+
+		local inParty, online = ApplyRosterItemState(item, key, bot)
+		if online then
+			flags.allLoggedOut = false
+			if inParty then
+				flags.anyInParty = true
+			else
+				flags.allInParty = false
+			end
+		else
+			flags.allLoggedIn = false
+		end
+
+		item:SetPoint("TOPLEFT", BotRoster, "TOPLEFT", x, -y)
+		index = index + 1
+		x = x + (5 + item:GetWidth())
+		height = item:GetHeight()
+		if width < x then
+			width = x
+		end
+		if fmod((index - 1), colCount) == 0 then
+			y = y + (5 + height)
+			x = 5
+		end
+	end
+
+	if fmod((index - 1), colCount) ~= 0 then
+		y = y + (5 + height)
+	end
+	if botCount() >= 10 then
+		y = 230
+	end
+
+	LayoutRosterBulkActions(y, allBots, flags)
+	y = LayoutRosterGroupToolBars(y, flags.anyInParty)
+	UpdateGroupToolBar()
+	if width < 186 then
+		width = 186
+	end
+	BotRoster:SetWidth(width)
+	BotRoster:SetHeight(y + 22)
+	UpdatePartyBotOverlays()
 end
 
 function createDropdown(opts)
@@ -1370,7 +1794,10 @@ function createDropdown(opts)
 	end
 
 	dropdown:SetWidth(dropdown_width)
-	getglobal(dropdown:GetName() .. "Text"):SetText(default_val)
+	local dropdownText = getglobal(dropdown:GetName() .. "Text")
+	if dropdownText ~= nil then
+		dropdownText:SetText(default_val)
+	end
 	dd_title:SetText(title_text)
 	dd_title:Hide()
 	dropdown:Hide()
@@ -1449,10 +1876,17 @@ function OpenDropDownMenu(bot)
 	DropDownMenu:SetPoint("CENTER", nil, "BOTTOMLEFT", x / scale, y / scale)
 	MenuForBot = bot
 	ToggleDropDownMenu(1, nil, DropDownMenu, "cursor")
+
 end
+
+-- Party frame role/gold/bag badges (disabled for now).
+local PARTY_BOT_OVERLAYS_ENABLED = false
 
 function CreatePartyBotOverlays()
 	local overlays = {}
+	if not PARTY_BOT_OVERLAYS_ENABLED then
+		return overlays
+	end
 	for i = 1, 4 do
 		local parent = getglobal("PartyMemberFrame" .. i)
 		if parent ~= nil then
@@ -1492,7 +1926,7 @@ function CreatePartyBotOverlays()
 end
 
 function UpdatePartyBotOverlays()
-	if PartyBotOverlays == nil then
+	if not PARTY_BOT_OVERLAYS_ENABLED or PartyBotOverlays == nil then
 		return
 	end
 	for i = 1, 4 do
@@ -1540,73 +1974,7 @@ DropDownMenu = CreateDropDownMenu(BotRoster)
 PartyBotOverlays = CreatePartyBotOverlays()
 CurrentBot = nil
 
-function UpdateGroupToolBar()
-	for toolbarName, toolbar in pairs(GroupToolBars) do
-		for buttonName, button in pairs(toolbar) do
-			local toggleCount = 0
-			for botName, bot in pairs(botTable) do
-				local toggle = false
-				if button["strategy"] ~= nil and bot["strategy"] ~= nil then
-					local engines = { "nc", "co", "react", "dead" }
-					for ei = 1, 4 do
-						local elist = bot["strategy"][engines[ei]]
-						if elist ~= nil then
-							for _, strategy in pairs(elist) do
-								if strategy == button["strategy"] then
-									toggle = true
-									break
-								end
-							end
-						end
-						if toggle then
-							break
-						end
-					end
-				end
-				if
-					button["formation"] ~= nil
-					and bot["formation"] ~= nil
-					and string.find(bot["formation"], button["formation"]) ~= nil
-				then
-					toggle = true
-				end
-				if
-					button["stance"] ~= nil
-					and bot["stance"] ~= nil
-					and string.find(bot["stance"], button["stance"]) ~= nil
-				then
-					toggle = true
-				end
-				if button["rti"] ~= nil and bot["rti"] ~= nil and string.find(bot["rti"], button["rti"]) ~= nil then
-					toggle = true
-				end
-				if
-					button["rti_cc"] ~= nil
-					and bot["rti_cc"] ~= nil
-					and string.find(bot["rti_cc"], button["rti_cc"]) ~= nil
-				then
-					toggle = true
-				end
-				if button["loot"] ~= nil and bot["loot"] ~= nil and string.find(bot["loot"], button["loot"]) ~= nil then
-					toggle = true
-				end
-				if
-					button["savemana"] ~= nil
-					and bot["savemana"] ~= nil
-					and string.find(bot["savemana"], button["savemana"]) ~= nil
-				then
-					toggle = true
-				end
-
-				if toggle then
-					for i = 1, 5 do
-						if partyName(i) == botName then
-							toggleCount = toggleCount + 1
-						end
-					end
-				end
-			end
-			ToggleButton(BotRoster, toolbarName, buttonName, toggleCount > 0, toggleCount < partySize())
-		end
-	end
+-- Ensure slash targets exist even if a later init step failed on older clients.
+if BotRoster == nil or BotDebugPanel == nil or SelectedBotPanel == nil then
+	print("Mangosbot: UI init incomplete")
 end
