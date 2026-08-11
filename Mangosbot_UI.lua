@@ -428,7 +428,7 @@ function CreateSelectedBotPanel()
 			icon = "talk",
 			command = { [0] = "accept *" },
 			strategy = "",
-			tooltip = "Talk",
+			tooltip = "Accept all quests",
 			index = 6,
 		},
 		["menu"] = {
@@ -562,7 +562,7 @@ function CreateSelectedBotPanel()
 			icon = "grind",
 			command = { [0] = "nc +grind,?" },
 			strategy = "grind",
-			tooltip = "Aggresive mode (grinding)",
+			tooltip = "Aggressive mode (grinding)",
 			index = 3,
 		},
 		["close"] = {
@@ -641,7 +641,7 @@ function CreateSelectedBotPanel()
 			icon = "dps",
 			command = { [0] = "co ~melee,?" },
 			strategy = "melee",
-			tooltip = "Melee",
+			tooltip = "Melee mode",
 			index = 5,
 		},
 	})
@@ -803,7 +803,7 @@ function CreateSelectedBotPanel()
 			icon = "shadow",
 			command = { [0] = "co +shadow,?" },
 			strategy = "shadow",
-			tooltip = "Dps mode: shadow",
+			tooltip = "DPS mode: shadow",
 			index = 2,
 		},
 		["shadow_aoe"] = {
