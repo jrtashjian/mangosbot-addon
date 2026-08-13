@@ -98,6 +98,7 @@ function MB_ChatEditBox()
 	return box
 end
 
+-- Arg order flips between Classic (width, frame) and TBC+ (frame, width).
 function MB_DropDownSetWidth(frame, width)
 	if not UIDropDownMenu_SetWidth or frame == nil or width == nil then
 		return
@@ -109,6 +110,7 @@ function MB_DropDownSetWidth(frame, width)
 	end
 end
 
+-- Classic handlers read global event/argN; newer clients pass args explicitly.
 function MB_EventArgs(_self, eventName, a1, a2, a3, a4)
 	if eventName == nil then
 		eventName = event
@@ -142,6 +144,7 @@ CommandSeparator = "\\\\"
 DropDownMenu = {}
 botTable = {}
 
+-- math.fmod is missing on Classic (Lua 5.0); emulate it.
 function fmod(a, b)
 	return a - math.floor(a / b) * b
 end
@@ -227,6 +230,7 @@ function tablelength(T)
 	return count
 end
 
+-- Run func after delay seconds on a hidden OnUpdate frame; re-queues on each tick.
 function wait(delay, func, a1, a2, a3, a4, a5, a6, a7, a8, a9)
 	if type(delay) ~= "number" or type(func) ~= "function" then
 		return false
@@ -264,6 +268,7 @@ function wait(delay, func, a1, a2, a3, a4, a5, a6, a7, a8, a9)
 	return true
 end
 
+-- Raid slot wins when the same index also exists in the raid.
 function partyName(i)
 	local p = UnitName("party" .. i)
 	local r = UnitName("raid" .. i)
@@ -290,6 +295,7 @@ function botCount()
 	return count
 end
 
+-- Uppercase, space-free class key used for lookups and image filenames.
 function ClassToken(class)
 	if class == nil then
 		return "UNKNOWN"
@@ -329,6 +335,7 @@ function orderedNext(t, state)
 	return
 end
 
+-- Iterate keys in sorted order (pairs() order is unspecified).
 function orderedPairs(t)
 	return orderedNext, t, nil
 end

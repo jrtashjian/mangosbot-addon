@@ -71,6 +71,7 @@ local function IsBotChatEvent(eventName)
 		or IsGroupChatEvent(eventName)
 end
 
+-- True when nothing selectable is targeted (no unit, enemy, NPC, or self).
 local function ShouldHideBotControls()
 	if CurrentBot ~= nil then
 		return false
@@ -84,12 +85,14 @@ local function ShouldHideBotControls()
 		or name == selfName
 end
 
+-- Delay so the acked command lands before we re-query the resulting state.
 local function QueueBotStateQuery(command, sender)
 	wait(0.1, function()
 		SendBotAddonCommand(command, "WHISPER", nil, sender)
 	end)
 end
 
+-- Playerbots acks are one-shot messages; re-query each so the UI reflects new state.
 local function HandleBotStatusMessage(message, sender)
 	if string.find(message, "Hello") == 1 or string.find(message, "Goodbye") == 1 then
 		SendBotCommand(".bot list", "SAY")
@@ -122,6 +125,7 @@ local function HandleBotStatusMessage(message, sender)
 	end
 end
 
+-- No bot targeted: drive the group bar; otherwise drive the targeted bot.
 function OnKeyBindingDown(button)
 	if ShouldHideBotControls() then
 		ClickGroupToolBarButton("group_movement", button)

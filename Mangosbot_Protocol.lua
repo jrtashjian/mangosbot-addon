@@ -402,6 +402,7 @@ local FIELD_PREFIXES = {
 	{ prefix = "rti:", field = "rti" },
 }
 
+-- Store parsed reply state on botTable[sender]; returns true when it changed.
 function OnWhisper(message, sender)
 	if message == nil or sender == nil then
 		return false

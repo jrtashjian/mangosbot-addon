@@ -10,6 +10,7 @@ function ClickGroupToolBarButton(toolbar, button)
 	ToolBarButtonOnClick(btn, false)
 end
 
+-- Send a button's commands: group=true broadcasts to party, else whispers the target bot.
 function ToolBarButtonOnClick(btn, visual)
 	if btn["handler"] ~= nil then
 		btn["handler"]()
@@ -52,6 +53,7 @@ function ToggleButton(frame, toolbar, button, toggle, mixed)
 	end
 end
 
+-- Persist drag position into the frameopts saved variable; restore it on Show.
 function EnablePositionSaving(frame, frameName)
 	frame:SetScript("OnMouseDown", function()
 		this:StartMoving()
@@ -152,6 +154,7 @@ function BotHasStrategy(bot, strategyName)
 	return false
 end
 
+-- True when reported bot state matches the button (drives toggle highlighting).
 function BotButtonIsActive(bot, button)
 	if bot == nil or button == nil then
 		return false
@@ -189,6 +192,7 @@ function BotIsInParty(botName)
 	return false
 end
 
+-- Solid green when all party bots match a button; green outline when only some do.
 function UpdateGroupToolBar()
 	for toolbarName, toolbar in pairs(GroupToolBars) do
 		for buttonName, button in pairs(toolbar) do
@@ -335,6 +339,7 @@ function BotDebugLogMessage(direction, message, peer)
 	end
 
 	if BotDebugPanel.scroll ~= nil then
+		-- Direction colors: >> gold (sent), << blue (received), sys green.
 		local r, g, b = 0.9, 0.9, 0.9
 		if direction == ">>" then
 			r, g, b = 1.0, 0.82, 0.0
@@ -1296,6 +1301,7 @@ function CreateBotPanel()
 	return frame
 end
 
+-- Open the panel for known bots or group members; never self, enemies, or NPCs.
 function IsBotPanelTarget()
 	local name = MB_UnitName("target")
 	if name == nil then
@@ -1388,6 +1394,7 @@ local function RebuildClassSection(f, clsKey)
 	LayoutContentHeight(f)
 end
 
+-- Repaint the header, dropdowns, and checkboxes from botTable[CurrentBot].
 function RefreshBotPanel()
 	local f = MangosbotBotFrame
 	if f == nil or f.portrait == nil or f.nameText == nil then
@@ -1502,6 +1509,7 @@ function CreateBotRoster()
 	EnablePositionSaving(frame, "BotRoster")
 
 	frame.items = {}
+	-- Pre-build a fixed pool of item slots that RefreshBotRoster reuses.
 	for i = 1, 10 do
 		local item = CreateFrame("Frame", "BotRoster_Item" .. i, frame)
 		item:SetPoint("TOPLEFT", frame, "TOPLEFT", i * 100, 0)
@@ -1712,6 +1720,7 @@ local function SetRosterItemHandlers(item, key)
 	end)
 end
 
+-- Show/hide per-bot buttons by state: offline -> login, online -> whisper/menu, in party -> leave.
 local function ApplyRosterItemState(item, key, bot)
 	local quickbar = item.toolbar["quickbar" .. item.rosterIndex]
 	local loginBtn = quickbar.buttons["login"]
@@ -1765,6 +1774,7 @@ local function ApplyRosterItemState(item, key, bot)
 	return inParty, bot["online"] == true
 end
 
+-- Show a bulk action only when not everyone already matches its target state.
 local function LayoutRosterBulkActions(y, allBots, flags)
 	local tb = BotRoster.toolbar["quickbar"]
 	tb:SetPoint("TOPLEFT", BotRoster, "TOPLEFT", 5, -y)
@@ -1857,6 +1867,7 @@ local function LayoutRosterGroupToolBars(y, show)
 	return y
 end
 
+-- Reflow the pooled item slots into a grid, then lay out bulk and group bars.
 function RefreshBotRoster()
 	if BotRoster.ShowRequest then
 		BotRoster:Show()
@@ -1938,6 +1949,7 @@ function RefreshBotRoster()
 	BotRoster:SetHeight(y + 22)
 end
 
+-- Legacy dropdown builder used by the roster More... menu.
 function createDropdown(opts)
 	local dropdown_name = opts["name"] .. "_dropdown"
 	local menu_items = opts["items"] or {}

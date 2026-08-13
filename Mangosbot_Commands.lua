@@ -1,3 +1,4 @@
+-- Build a toolbar from button defs: command = ordered AI commands, index = x slot.
 function CreateToolBar(frame, y, name, buttons, x, spacing, register)
 	if x == nil then
 		x = 5
@@ -92,6 +93,7 @@ local RAID_ICONS = {
 	"moon",
 }
 
+-- Generate one button per raid icon (shared by the rti and rti cc bars).
 local function CreateRaidIconToolBar(frame, y, name, group, x, spacing, register, spec)
 	local buttons = {}
 	for i = 1, table.getn(RAID_ICONS) do
@@ -129,6 +131,7 @@ function CreateRtiCcToolBar(frame, y, name, group, x, spacing, register)
 	})
 end
 
+-- AI command syntax: #a = silent reply, ? = query, ~ = toggle, @role = targeted command.
 function CreateMovementToolBar(frame, y, name, group, x, spacing, register)
 	local tb = {
 		["follow_master"] = {
