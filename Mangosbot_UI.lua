@@ -601,66 +601,66 @@ BEHAVIOR_GROUPS = {
 -- co+nc. Names match getName() in playerbot/strategy/<class>/*Strategy.h.
 CLASS_STRATEGIES = {
 	DRUID = {
-		{ token = "tank feral", label = "Bear form", engines = { "all" } },
-		{ token = "dps feral", label = "Cat form", engines = { "all" } },
-		{ token = "balance", label = "Caster", engines = { "all" } },
-		{ token = "restoration", label = "Healing", engines = { "all" } },
+		{ token = "tank feral", label = "Bear form", engines = { "all" }, spec = true },
+		{ token = "dps feral", label = "Cat form", engines = { "all" }, spec = true },
+		{ token = "balance", label = "Caster", engines = { "all" }, spec = true },
+		{ token = "restoration", label = "Healing", engines = { "all" }, spec = true },
 		{ token = "cure", label = "Dispels" },
 	},
 	HUNTER = {
-		{ token = "beast mastery", label = "Beast Mastery", engines = { "all" } },
-		{ token = "marksmanship", label = "Marksmanship", engines = { "all" } },
-		{ token = "survival", label = "Survival", engines = { "all" } },
+		{ token = "beast mastery", label = "Beast Mastery", engines = { "all" }, spec = true },
+		{ token = "marksmanship", label = "Marksmanship", engines = { "all" }, spec = true },
+		{ token = "survival", label = "Survival", engines = { "all" }, spec = true },
 		{ token = "pet", label = "Pet" },
 		{ token = "aoe", label = "Area damage" },
 	},
 	MAGE = {
-		{ token = "arcane", label = "Arcane", engines = { "all" } },
-		{ token = "fire", label = "Fire", engines = { "all" } },
-		{ token = "frost", label = "Frost", engines = { "all" } },
+		{ token = "arcane", label = "Arcane", engines = { "all" }, spec = true },
+		{ token = "fire", label = "Fire", engines = { "all" }, spec = true },
+		{ token = "frost", label = "Frost", engines = { "all" }, spec = true },
 		{ token = "aoe", label = "Area damage" },
 	},
 	PALADIN = {
-		{ token = "protection", label = "Tank", engines = { "all" } },
-		{ token = "holy", label = "Healing", engines = { "all" } },
-		{ token = "retribution", label = "Damage", engines = { "all" } },
+		{ token = "protection", label = "Tank", engines = { "all" }, spec = true },
+		{ token = "holy", label = "Healing", engines = { "all" }, spec = true },
+		{ token = "retribution", label = "Damage", engines = { "all" }, spec = true },
 		{ token = "cure", label = "Dispels" },
 	},
 	PRIEST = {
-		{ token = "discipline", label = "Discipline", engines = { "all" } },
-		{ token = "holy", label = "Healing", engines = { "all" } },
-		{ token = "shadow", label = "Damage", engines = { "all" } },
+		{ token = "discipline", label = "Discipline", engines = { "all" }, spec = true },
+		{ token = "holy", label = "Healing", engines = { "all" }, spec = true },
+		{ token = "shadow", label = "Damage", engines = { "all" }, spec = true },
 		{ token = "cure", label = "Dispels" },
 	},
 	ROGUE = {
-		{ token = "assassination", label = "Assassination", engines = { "all" } },
-		{ token = "combat", label = "Combat", engines = { "all" } },
-		{ token = "subtlety", label = "Subtlety", engines = { "all" } },
+		{ token = "assassination", label = "Assassination", engines = { "all" }, spec = true },
+		{ token = "combat", label = "Combat", engines = { "all" }, spec = true },
+		{ token = "subtlety", label = "Subtlety", engines = { "all" }, spec = true },
 		{ token = "aoe", label = "Area damage" },
 	},
 	SHAMAN = {
-		{ token = "elemental", label = "Elemental", engines = { "all" } },
-		{ token = "enhancement", label = "Enhancement", engines = { "all" } },
-		{ token = "restoration", label = "Healing", engines = { "all" } },
+		{ token = "elemental", label = "Elemental", engines = { "all" }, spec = true },
+		{ token = "enhancement", label = "Enhancement", engines = { "all" }, spec = true },
+		{ token = "restoration", label = "Healing", engines = { "all" }, spec = true },
 		{ token = "totems", label = "Totems" },
 		{ token = "cure", label = "Dispels" },
 	},
 	WARLOCK = {
-		{ token = "affliction", label = "Affliction", engines = { "all" } },
-		{ token = "demonology", label = "Demonology", engines = { "all" } },
-		{ token = "destruction", label = "Destruction", engines = { "all" } },
+		{ token = "affliction", label = "Affliction", engines = { "all" }, spec = true },
+		{ token = "demonology", label = "Demonology", engines = { "all" }, spec = true },
+		{ token = "destruction", label = "Destruction", engines = { "all" }, spec = true },
 		{ token = "pet", label = "Pet" },
 	},
 	WARRIOR = {
-		{ token = "arms", label = "Arms", engines = { "all" } },
-		{ token = "fury", label = "Fury", engines = { "all" } },
-		{ token = "protection", label = "Tank", engines = { "all" } },
+		{ token = "arms", label = "Arms", engines = { "all" }, spec = true },
+		{ token = "fury", label = "Fury", engines = { "all" }, spec = true },
+		{ token = "protection", label = "Tank", engines = { "all" }, spec = true },
 		{ token = "aoe", label = "Area damage" },
 	},
 	DEATHKNIGHT = {
-		{ token = "blood", label = "Tank", engines = { "all" } },
-		{ token = "frost", label = "Damage", engines = { "all" } },
-		{ token = "unholy", label = "Unholy", engines = { "all" } },
+		{ token = "blood", label = "Tank", engines = { "all" }, spec = true },
+		{ token = "frost", label = "Damage", engines = { "all" }, spec = true },
+		{ token = "unholy", label = "Unholy", engines = { "all" }, spec = true },
 		{ token = "aoe", label = "Area damage" },
 	},
 }
@@ -1181,6 +1181,28 @@ local function PlaceCheckboxGrid(content, y, items, store)
 	return rowY
 end
 
+local function CreateClassSpecDropdown(parent, items)
+	local row = CreateFrame("Frame", nil, parent)
+	row:SetWidth(BP_CONTENT_W)
+	row:SetHeight(BP_ROW_H)
+	local opts = { { value = "", label = "None" } }
+	for i = 1, table.getn(items) do
+		table.insert(opts, { value = items[i].token, label = items[i].label })
+	end
+	local dd, title, setter = CreateSettingDropdown(row, "Specialization", opts, function(value)
+		if value == "" then
+			for i = 1, table.getn(items) do
+				SendStrategyToggle(items[i].token, false, items[i].engines)
+			end
+		else
+			SendStrategyToggle(value, true, { "all" })
+		end
+	end)
+	title:SetPoint("LEFT", row, "LEFT", 0, 0)
+	dd:SetPoint("LEFT", row, "LEFT", BP_LABEL_W - 12, -2)
+	return row, setter
+end
+
 function CreateBotPanel()
 	local frame = CreateFrame("Frame", "MangosbotBotFrame", UIParent)
 	frame:Hide()
@@ -1426,6 +1448,8 @@ function CreateBotPanel()
 	frame.classDivider:Hide()
 	frame.classSectionY = y
 	frame.classCheckboxes = {}
+	frame.classSpecDropdown = nil
+	frame.classSpecSetter = nil
 	frame.currentClass = nil
 	frame.contentHeight = y + 8
 	LayoutContentHeight(frame)
@@ -1512,7 +1536,12 @@ local function RebuildClassSection(f, clsKey)
 	for _, box in pairs(f.classCheckboxes) do
 		box:Hide()
 	end
+	if f.classSpecDropdown ~= nil then
+		f.classSpecDropdown:Hide()
+	end
 	f.classCheckboxes = {}
+	f.classSpecDropdown = nil
+	f.classSpecSetter = nil
 	f.currentClass = clsKey
 
 	local classList = CLASS_STRATEGIES[clsKey]
@@ -1537,7 +1566,23 @@ local function RebuildClassSection(f, clsKey)
 	end
 	f.classDivider:SetPoint("TOPLEFT", f.content, "TOPLEFT", 0, -y)
 	y = y + 8
-	y = PlaceCheckboxGrid(f.content, y, classList, f.classCheckboxes)
+	local specList = {}
+	local checkboxList = {}
+	for i = 1, table.getn(classList) do
+		if classList[i].spec then
+			table.insert(specList, classList[i])
+		else
+			table.insert(checkboxList, classList[i])
+		end
+	end
+	if table.getn(specList) > 0 then
+		local row, setter = CreateClassSpecDropdown(f.content, specList)
+		f.classSpecDropdown = row
+		f.classSpecSetter = setter
+		row:SetPoint("TOPLEFT", f.content, "TOPLEFT", 0, -y)
+		y = y + BP_ROW_H + BP_SECTION_GAP
+	end
+	y = PlaceCheckboxGrid(f.content, y, checkboxList, f.classCheckboxes)
 	f.contentHeight = y + 12
 	LayoutContentHeight(f)
 end
@@ -1621,6 +1666,20 @@ function RefreshBotPanel()
 	local clsKey = string.upper(ClassToken(cls or ""))
 	if f.currentClass ~= clsKey then
 		RebuildClassSection(f, clsKey)
+	end
+	if f.classSpecSetter ~= nil then
+		local selectedSpec = ""
+		local classList = CLASS_STRATEGIES[clsKey]
+		if classList ~= nil then
+			for i = 1, table.getn(classList) do
+				local item = classList[i]
+				if item.spec and BotHasStrategy(bot, item.token, item.engines) then
+					selectedSpec = item.token
+					break
+				end
+			end
+		end
+		f.classSpecSetter(selectedSpec)
 	end
 
 	for _, box in pairs(f.classCheckboxes) do

@@ -353,11 +353,38 @@ check("buff toggles combat and noncombat",
 check("conserve mana uses server name", behaviorItem["conserve_mana"].name == "conserve mana")
 check("mark rti uses server name", behaviorItem["mark_rti"].name == "mark rti")
 
--- Class spec checkboxes map to real playerbots strategy names and toggle all engines.
+-- Class specialization options map to real playerbots strategy names and toggle
+-- all engines; the UI renders each class's spec group as one dropdown and keeps
+-- the remaining class strategies as independent checkboxes.
 check("druid spec uses real name", CLASS_STRATEGIES.DRUID[1].token == "tank feral")
 check("druid spec toggles all engines", CLASS_STRATEGIES.DRUID[1].engines[1] == "all")
 check("hunter spec beast mastery", CLASS_STRATEGIES.HUNTER[1].token == "beast mastery")
 check("deathknight spec frost", CLASS_STRATEGIES.DEATHKNIGHT[2].token == "frost")
+local expectedSpecCounts = {
+	DRUID = 4,
+	HUNTER = 3,
+	MAGE = 3,
+	PALADIN = 3,
+	PRIEST = 3,
+	ROGUE = 3,
+	SHAMAN = 3,
+	WARLOCK = 3,
+	WARRIOR = 3,
+	DEATHKNIGHT = 3,
+}
+for className, expectedCount in pairs(expectedSpecCounts) do
+	local specCount = 0
+	local independentCount = 0
+	for i = 1, table.getn(CLASS_STRATEGIES[className]) do
+		if CLASS_STRATEGIES[className][i].spec then
+			specCount = specCount + 1
+		else
+			independentCount = independentCount + 1
+		end
+	end
+	check(className .. " has one spec group", specCount == expectedCount)
+	check(className .. " keeps independent strategies", independentCount > 0)
+end
 local classTokens = {}
 for _, list in pairs(CLASS_STRATEGIES) do
 	for i = 1, table.getn(list) do
