@@ -68,6 +68,7 @@ globals = {
 	"BotLootLabel",
 	"BotMenuChatTable",
 	"BotMenuItems",
+	"LootStrategyCommand",
 	"BotRoster",
 	"ClearBotDebugLog",
 	"ClickGroupToolBarButton",

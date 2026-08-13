@@ -539,6 +539,18 @@ local matchBot = {
 check("BotHasStrategy finds nc entry", BotHasStrategy(matchBot, "food") == true)
 check("BotHasStrategy finds co entry", BotHasStrategy(matchBot, "frost") == true)
 check("BotHasStrategy misses unknown", BotHasStrategy(matchBot, "tank") == false)
+
+-- Engine-scoped checkboxes (e.g. "Combat boosts", co only) must not light up
+-- when the same strategy is reported in a different engine: `co -boost` leaves
+-- "boost" in non-combat, but the box must stay unchecked.
+local boostBot = {
+	strategy = { nc = { "boost" }, co = {}, react = {}, dead = {} },
+}
+check("BotHasStrategy co-only misses nc boost", BotHasStrategy(boostBot, "boost", { "co" }) == false)
+check("BotHasStrategy co+nc finds boost", BotHasStrategy(boostBot, "boost", { "co", "nc" }) == true)
+check("BotHasStrategy all engines finds boost", BotHasStrategy(boostBot, "boost", { "all" }) == true)
+check("BotHasStrategy default still spans engines", BotHasStrategy(boostBot, "boost") == true)
+check("BotHasStrategy empty list misses", BotHasStrategy(boostBot, "boost", {}) == false)
 check("BotButtonIsActive strategy", BotButtonIsActive(matchBot, { strategy = "potions" }) == true)
 check("BotButtonIsActive formation", BotButtonIsActive(matchBot, { formation = "near" }) == true)
 check("BotButtonIsActive stance", BotButtonIsActive(matchBot, { stance = "behind" }) == true)
@@ -608,10 +620,29 @@ check("CanonicalSet nil", CanonicalSet(nil) == nil)
 check("loot label matches expanded all",
     BotLootLabel("equip,vendor,disenchant,quest,skill,use,vendor,trash") == "Everything")
 check("loot label matches default strategy",
-    BotLootLabel("equip,quest,skill,disenchant,use,vendor") == "Gray items")
-check("loot label matches keyword", BotLootLabel("gray") == "Gray items")
-check("loot label matches trade skills",
-    BotLootLabel("equip,vendor,quest,skill,use") == "Trade skills")
+    BotLootLabel("equip,quest,skill,disenchant,use,vendor") == "Useful & Green items")
+check("loot label matches keyword", BotLootLabel("gray") == "Useful & Green items")
+check("loot label matches useful items",
+    BotLootLabel("equip,vendor,quest,skill,use") == "Useful items")
+
+-- The server merges `ll` keyword operations, so the dropdown must send an
+-- explicit +/- for every allowed keyword to reach the preset exactly (bare
+-- keywords like "normal" can never remove the default "disenchant").
+check("loot command lands trade skills",
+    LootStrategyCommand("equip,quest,skill,use,vendor")
+    == "ll -disenchant,-trash,+equip,+quest,+skill,+use,+vendor")
+check("loot command lands gray items",
+    LootStrategyCommand("disenchant,equip,quest,skill,use,vendor")
+    == "ll -trash,+disenchant,+equip,+quest,+skill,+use,+vendor")
+check("loot command lands everything",
+    LootStrategyCommand("disenchant,equip,quest,skill,trash,use,vendor")
+    == "ll +disenchant,+equip,+quest,+skill,+trash,+use,+vendor")
+check("loot command drops every keyword on empty set",
+    LootStrategyCommand("")
+    == "ll -disenchant,-equip,-quest,-skill,-trash,-use,-vendor")
+check("loot command ignores unknown keywords",
+    LootStrategyCommand("equip,quest,skill,use,vendor,normal")
+    == "ll -disenchant,-trash,+equip,+quest,+skill,+use,+vendor")
 
 -- SendStrategyToggle buffers toggles per engine during a burst and flushes them
 -- as one combined command per engine after a quiet period, then re-queries all

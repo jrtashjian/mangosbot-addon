@@ -137,18 +137,39 @@ local function BotFieldContains(bot, field, value)
 	return value ~= nil and bot[field] ~= nil and string.find(bot[field], value) ~= nil
 end
 
-function BotHasStrategy(bot, strategyName)
+local function EngineListHas(elist, strategyName)
+	if elist == nil then
+		return false
+	end
+	for _, strategy in pairs(elist) do
+		if strategy == strategyName then
+			return true
+		end
+	end
+	return false
+end
+
+-- True when the strategy is reported in the given engines (default: any). The
+-- `engines` list mirrors a checkbox's toggle targets ("all" spans every state),
+-- so a "Combat boosts" box (co only) stays unchecked when the strategy also
+-- lives in non-combat.
+function BotHasStrategy(bot, strategyName, engines)
 	if bot == nil or strategyName == nil or bot["strategy"] == nil then
 		return false
 	end
-	for ei = 1, 4 do
-		local elist = bot["strategy"][STRATEGY_ENGINES[ei]]
-		if elist ~= nil then
-			for _, strategy in pairs(elist) do
-				if strategy == strategyName then
+	if engines == nil then
+		engines = STRATEGY_ENGINES
+	end
+	for ei = 1, table.getn(engines) do
+		local e = engines[ei]
+		if e == "all" then
+			for ai = 1, table.getn(STRATEGY_ENGINES) do
+				if EngineListHas(bot["strategy"][STRATEGY_ENGINES[ai]], strategyName) then
 					return true
 				end
 			end
+		elseif EngineListHas(bot["strategy"][e], strategyName) then
+			return true
 		end
 	end
 	return false
@@ -482,14 +503,54 @@ local STANCE_OPTS = {
 	{ value = "behind", label = "Behind" },
 }
 -- `set` is the canonical (sorted, deduped) expansion the server echoes for each
--- keyword (LootStrategyValue::Set backwards-compat mapping). "gray" and
--- "disenchant" expand to the same set server-side.
+-- preset (LootStrategyValue::Set backwards-compat mapping). The presets only
+-- differ by two keywords: "disenchant" (green+ gear the bot can't use) and
+-- "trash" (gray junk). "gray" and "disenchant" both expand to the same set
+-- server-side, so only one of them is exposed.
 local LOOT_OPTS = {
-	{ value = "normal", label = "Trade skills", set = "equip,quest,skill,use,vendor" },
-	{ value = "gray", label = "Gray items", set = "disenchant,equip,quest,skill,use,vendor" },
-	{ value = "disenchant", label = "Disenchant", set = "disenchant,equip,quest,skill,use,vendor" },
+	{ value = "normal", label = "Useful items", set = "equip,quest,skill,use,vendor" },
+	{ value = "gray", label = "Useful & Green items", set = "disenchant,equip,quest,skill,use,vendor" },
 	{ value = "all", label = "Everything", set = "disenchant,equip,quest,skill,trash,use,vendor" },
 }
+
+-- Allowed `ll` keywords (LootStrategyValue.cpp). `ll` merges keyword operations
+-- into the loot strategy set (SubStrategyValue::Set), so a bare preset can only
+-- ever add keywords -- "normal" can't remove the default "disenchant". Reach an
+-- exact set by sending a +/- operation for every keyword instead.
+local LOOT_ALLOWED = { "equip", "quest", "skill", "disenchant", "use", "vendor", "trash" }
+
+-- Build the `ll` command that lands the loot strategy on exactly `set` (a
+-- comma-list) regardless of the current value: drop every allowed keyword the
+-- set omits, then add the ones it wants.
+function LootStrategyCommand(set)
+	local target = {}
+	if set ~= nil then
+		local parts = splitString2(set, ",")
+		for i = 1, table.getn(parts) do
+			target[trim2(parts[i])] = true
+		end
+	end
+	local drop = {}
+	local add = {}
+	for i = 1, table.getn(LOOT_ALLOWED) do
+		local kw = LOOT_ALLOWED[i]
+		if target[kw] then
+			table.insert(add, "+" .. kw)
+		else
+			table.insert(drop, "-" .. kw)
+		end
+	end
+	table.sort(drop)
+	table.sort(add)
+	local parts = {}
+	for i = 1, table.getn(drop) do
+		table.insert(parts, drop[i])
+	end
+	for i = 1, table.getn(add) do
+		table.insert(parts, add[i])
+	end
+	return "ll " .. table.concat(parts, ",")
+end
 local SAVEMANA_OPTS = {
 	{ value = "1", label = "1 - Always cast" },
 	{ value = "2", label = "2 - Low" },
@@ -1079,7 +1140,17 @@ local function PlaceDropdownRow(content, y, label, opts, cmdPrefix)
 	row:SetHeight(BP_ROW_H)
 	row:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -y)
 	local dd, title, setter = CreateSettingDropdown(row, label, opts, function(v)
-		SendToCurrentBot(cmdPrefix .. v)
+		local cmd = nil
+		for i = 1, table.getn(opts) do
+			if opts[i].value == v and opts[i].set ~= nil then
+				cmd = LootStrategyCommand(opts[i].set)
+				break
+			end
+		end
+		if cmd == nil then
+			cmd = cmdPrefix .. v
+		end
+		SendToCurrentBot(cmd)
 	end)
 	title:SetPoint("LEFT", row, "LEFT", 0, 0)
 	dd:SetPoint("LEFT", row, "LEFT", BP_LABEL_W - 12, -2)
@@ -1542,7 +1613,7 @@ function RefreshBotPanel()
 	for _, box in pairs(f.checkboxes) do
 		local on = false
 		if BotHasStrategy then
-			on = BotHasStrategy(bot, box.strategyName) and true or false
+			on = BotHasStrategy(bot, box.strategyName, box.engines or { "co", "nc" }) and true or false
 		end
 		box:SetChecked(on)
 	end
@@ -1555,7 +1626,7 @@ function RefreshBotPanel()
 	for _, box in pairs(f.classCheckboxes) do
 		local on = false
 		if BotHasStrategy then
-			on = BotHasStrategy(bot, box.strategyName) and true or false
+			on = BotHasStrategy(bot, box.strategyName, box.engines or { "co", "nc" }) and true or false
 		end
 		box:SetChecked(on)
 	end
