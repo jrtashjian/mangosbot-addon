@@ -506,94 +506,98 @@ local MARK_OPTS = {
 }
 
 -- Behavior toggles grouped for layout (two columns within each group).
-local BEHAVIOR_GROUPS = {
+-- `engines` target the playerbots engine(s) the strategy actually lives in
+-- (see playerbot/AiFactory.cpp); `name` is the server strategy name when it
+-- differs from the UI token (e.g. "conserve mana" vs. "conserve_mana").
+BEHAVIOR_GROUPS = {
 	{
 		title = "Survival",
 		items = {
-			{ label = "Eat and drink", token = "food" },
-			{ label = "Use potions", token = "potions" },
-			{ label = "Conserve mana", token = "conserve_mana" },
-			{ label = "Defense", token = "defense" },
+			{ label = "Eat and drink", token = "food", engines = { "nc" } },
+			{ label = "Use potions", token = "potions", engines = { "react" } },
+			{ label = "Conserve mana", token = "conserve_mana", name = "conserve mana", engines = { "co" } },
 		},
 	},
 	{
 		title = "Activity",
 		items = {
-			{ label = "Buff allies", token = "buff" },
-			{ label = "Loot corpses", token = "loot" },
-			{ label = "Gather nodes", token = "gather" },
-			{ label = "Grind mobs", token = "grind" },
-			{ label = "Combat boosts", token = "boost" },
-			{ label = "Mark targets", token = "mark_rti" },
+			{ label = "Buff allies", token = "buff", engines = { "co", "nc" } },
+			{ label = "Loot corpses", token = "loot", engines = { "nc" } },
+			{ label = "Gather nodes", token = "gather", engines = { "nc" } },
+			{ label = "Grind mobs", token = "grind", engines = { "nc" } },
+			{ label = "Combat boosts", token = "boost", engines = { "co" } },
+			{ label = "Mark targets", token = "mark_rti", name = "mark rti", engines = { "co" } },
 		},
 	},
 }
 
--- Class strategies: token + readable label
-local CLASS_STRATEGIES = {
+-- Class strategies: real playerbots strategy names + readable label.
+-- Spec strategies live in all four engines (combat/noncombat/dead/reaction) so
+-- they toggle via `all`; class-generic ones (cure, aoe, pet, totems) default to
+-- co+nc. Names match getName() in playerbot/strategy/<class>/*Strategy.h.
+CLASS_STRATEGIES = {
 	DRUID = {
-		{ token = "bear", label = "Bear form" },
-		{ token = "cat", label = "Cat form" },
-		{ token = "caster", label = "Caster" },
-		{ token = "heal", label = "Healing" },
+		{ token = "tank feral", label = "Bear form", engines = { "all" } },
+		{ token = "dps feral", label = "Cat form", engines = { "all" } },
+		{ token = "balance", label = "Caster", engines = { "all" } },
+		{ token = "restoration", label = "Healing", engines = { "all" } },
 		{ token = "cure", label = "Dispels" },
-		{ token = "melee", label = "Melee" },
 	},
 	HUNTER = {
-		{ token = "dps", label = "Damage" },
-		{ token = "aoe", label = "Area damage" },
-		{ token = "bdps", label = "Buff damage" },
+		{ token = "beast mastery", label = "Beast Mastery", engines = { "all" } },
+		{ token = "marksmanship", label = "Marksmanship", engines = { "all" } },
+		{ token = "survival", label = "Survival", engines = { "all" } },
 		{ token = "pet", label = "Pet" },
-		{ token = "rnature", label = "Nature resist" },
+		{ token = "aoe", label = "Area damage" },
 	},
 	MAGE = {
-		{ token = "dps", label = "Damage" },
+		{ token = "arcane", label = "Arcane", engines = { "all" } },
+		{ token = "fire", label = "Fire", engines = { "all" } },
+		{ token = "frost", label = "Frost", engines = { "all" } },
 		{ token = "aoe", label = "Area damage" },
-		{ token = "bmana", label = "Buff mana" },
-		{ token = "bdps", label = "Buff damage" },
-		{ token = "rfire", label = "Fire resist" },
 	},
 	PALADIN = {
-		{ token = "dps", label = "Damage" },
-		{ token = "tank", label = "Tank" },
-		{ token = "heal", label = "Healing" },
+		{ token = "protection", label = "Tank", engines = { "all" } },
+		{ token = "holy", label = "Healing", engines = { "all" } },
+		{ token = "retribution", label = "Damage", engines = { "all" } },
 		{ token = "cure", label = "Dispels" },
-		{ token = "bthreat", label = "Buff threat" },
 	},
 	PRIEST = {
-		{ token = "heal", label = "Healing" },
-		{ token = "holy", label = "Holy" },
-		{ token = "shadow", label = "Shadow" },
+		{ token = "discipline", label = "Discipline", engines = { "all" } },
+		{ token = "holy", label = "Healing", engines = { "all" } },
+		{ token = "shadow", label = "Damage", engines = { "all" } },
 		{ token = "cure", label = "Dispels" },
-		{ token = "rshadow", label = "Shadow resist" },
 	},
 	ROGUE = {
-		{ token = "dps", label = "Damage" },
+		{ token = "assassination", label = "Assassination", engines = { "all" } },
+		{ token = "combat", label = "Combat", engines = { "all" } },
+		{ token = "subtlety", label = "Subtlety", engines = { "all" } },
 		{ token = "aoe", label = "Area damage" },
 	},
 	SHAMAN = {
-		{ token = "caster", label = "Caster" },
-		{ token = "melee", label = "Melee" },
-		{ token = "heal", label = "Healing" },
+		{ token = "elemental", label = "Elemental", engines = { "all" } },
+		{ token = "enhancement", label = "Enhancement", engines = { "all" } },
+		{ token = "restoration", label = "Healing", engines = { "all" } },
 		{ token = "totems", label = "Totems" },
 		{ token = "cure", label = "Dispels" },
 	},
 	WARLOCK = {
-		{ token = "dps", label = "Damage" },
-		{ token = "dps_debuff", label = "Damage debuffs" },
+		{ token = "affliction", label = "Affliction", engines = { "all" } },
+		{ token = "demonology", label = "Demonology", engines = { "all" } },
+		{ token = "destruction", label = "Destruction", engines = { "all" } },
 		{ token = "pet", label = "Pet" },
-		{ token = "tank", label = "Tank pet" },
 	},
 	WARRIOR = {
-		{ token = "dps", label = "Damage" },
-		{ token = "tank", label = "Tank" },
+		{ token = "arms", label = "Arms", engines = { "all" } },
+		{ token = "fury", label = "Fury", engines = { "all" } },
+		{ token = "protection", label = "Tank", engines = { "all" } },
 		{ token = "aoe", label = "Area damage" },
 	},
 	DEATHKNIGHT = {
-		{ token = "dps", label = "Damage" },
-		{ token = "tank", label = "Tank" },
+		{ token = "blood", label = "Tank", engines = { "all" } },
+		{ token = "frost", label = "Damage", engines = { "all" } },
+		{ token = "unholy", label = "Unholy", engines = { "all" } },
 		{ token = "aoe", label = "Area damage" },
-		{ token = "bdeath", label = "Death coil buff" },
 	},
 }
 
@@ -604,20 +608,26 @@ local function SendToCurrentBot(cmd)
 	SendBotCommand(cmd, "WHISPER", nil, CurrentBot)
 end
 
-local function SendStrategyToggle(token, on)
+local function SendStrategyToggle(name, on, engines)
 	local prefix = "+"
 	if not on then
 		prefix = "-"
 	end
-	SendToCurrentBot("co " .. prefix .. token .. ",?")
-	SendToCurrentBot("nc " .. prefix .. token .. ",?")
+	if engines == nil then
+		engines = { "co", "nc" }
+	end
+	for i = 1, table.getn(engines) do
+		SendToCurrentBot(engines[i] .. " " .. prefix .. name .. ",?")
+	end
 end
 
 function QueryBotPanelState(name)
 	if name == nil then
 		return
 	end
-	QuerySelectedBot(name)
+	if not BotHasPanelState(botTable[name]) then
+		QuerySelectedBot(name)
+	end
 	wait(0.05, function()
 		SendBotCommand(EnsureAddonPrefix("stats"), "WHISPER", nil, name)
 	end)
@@ -851,7 +861,7 @@ local function CreateSettingDropdown(parent, label, opts, onSelect)
 	return dd, title, SetValue
 end
 
-local function CreateToggleCheckbox(parent, label, token)
+local function CreateToggleCheckbox(parent, label, token, strategyName, engines)
 	BP_DROPDOWN_SEQ = BP_DROPDOWN_SEQ + 1
 	local name = "MangosbotCB" .. BP_DROPDOWN_SEQ
 	local cb = CreateFrame("CheckButton", name, parent, "UICheckButtonTemplate")
@@ -867,6 +877,8 @@ local function CreateToggleCheckbox(parent, label, token)
 	textFS:SetText(label)
 	cb.text = textFS
 	cb.token = token
+	cb.strategyName = strategyName
+	cb.engines = engines
 
 	cb:SetScript("OnClick", function()
 		local self = this
@@ -874,7 +886,7 @@ local function CreateToggleCheckbox(parent, label, token)
 		if self.GetChecked then
 			on = self:GetChecked() and true or false
 		end
-		SendStrategyToggle(self.token, on)
+		SendStrategyToggle(self.strategyName, on, self.engines)
 	end)
 
 	return cb
@@ -1014,7 +1026,7 @@ local function PlaceCheckboxGrid(content, y, items, store)
 	local rowY = y
 	for i = 1, table.getn(items) do
 		local t = items[i]
-		local cb = CreateToggleCheckbox(content, t.label, t.token)
+		local cb = CreateToggleCheckbox(content, t.label, t.token, t.name or t.token, t.engines)
 		local x = 0
 		if col == 1 then
 			x = BP_COL2_X
@@ -1462,10 +1474,10 @@ function RefreshBotPanel()
 		end
 	end
 
-	for tok, box in pairs(f.checkboxes) do
+	for _, box in pairs(f.checkboxes) do
 		local on = false
 		if BotHasStrategy then
-			on = BotHasStrategy(bot, tok) and true or false
+			on = BotHasStrategy(bot, box.strategyName) and true or false
 		end
 		box:SetChecked(on)
 	end
@@ -1475,10 +1487,10 @@ function RefreshBotPanel()
 		RebuildClassSection(f, clsKey)
 	end
 
-	for tok, box in pairs(f.classCheckboxes) do
+	for _, box in pairs(f.classCheckboxes) do
 		local on = false
 		if BotHasStrategy then
-			on = BotHasStrategy(bot, tok) and true or false
+			on = BotHasStrategy(bot, box.strategyName) and true or false
 		end
 		box:SetChecked(on)
 	end

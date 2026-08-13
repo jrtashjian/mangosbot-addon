@@ -73,20 +73,15 @@ function SendBotAddonCommand(text, chat, lang, channel)
 	SendBotCommand(EnsureAddonPrefix(text), chat, lang, channel)
 end
 
+-- Party-wide refresh for the roster's group toolbars: only fields those bars show.
 function QueryBotParty()
 	wait(0.1, function()
 		SendBotCommand(
-			EnsureAddonPrefix("ll ?")
-				.. CommandSeparator
-				.. EnsureAddonPrefix("formation ?")
-				.. CommandSeparator
-				.. EnsureAddonPrefix("stance ?")
+			EnsureAddonPrefix("formation ?")
 				.. CommandSeparator
 				.. EnsureAddonPrefix("co ?")
 				.. CommandSeparator
 				.. EnsureAddonPrefix("nc ?")
-				.. CommandSeparator
-				.. EnsureAddonPrefix("react ?")
 				.. CommandSeparator
 				.. EnsureAddonPrefix("save mana ?"),
 			"PARTY"
@@ -171,7 +166,7 @@ local HIDE_PREFIXES = {
 	"rti cc:",
 	"rti set to",
 	"rti cc set to",
-	-- Movement shortcut acks (English BOT_TEXT defaults; UI re-queries on these)
+	-- Movement shortcut acks (English BOT_TEXT defaults)
 	"Following",
 	"Staying",
 	"Fleeing",
@@ -388,15 +383,20 @@ local STRATEGY_PREFIXES = {
 	{ prefix = "Strategies:", type = "co", ncIfBodyHasNc = true },
 }
 
--- Longer prefixes first so "rti cc set to" wins over "rti:".
+-- Longer prefixes first so "rti cc set to:" wins over "rti:". "set to" acks carry
+-- the new value, so parsing them replaces a state re-query per ack.
 local FIELD_PREFIXES = {
+	{ prefix = "Formation set to:", field = "formation", lower = true },
 	{ prefix = "Formation:", field = "formation", lower = true },
+	{ prefix = "Stance set to:", field = "stance", lower = true },
 	{ prefix = "Stance:", field = "stance", lower = true },
 	{ prefix = "Mana save level set:", field = "savemana" },
 	{ prefix = "Mana save level:", field = "savemana" },
 	{ prefix = "Loot strategy set to", field = "loot" },
 	{ prefix = "Loot strategy:", field = "loot" },
+	{ prefix = "rti cc set to:", field = "rti_cc" },
 	{ prefix = "rti cc set to", field = "rti_cc" },
+	{ prefix = "rti set to:", field = "rti" },
 	{ prefix = "rti set to", field = "rti" },
 	{ prefix = "rti cc:", field = "rti_cc" },
 	{ prefix = "rti:", field = "rti" },
@@ -459,6 +459,9 @@ function OnWhisper(message, sender)
 		bot["xp"] = stats.xp
 		dirty = true
 	end
+	if dirty then
+		PersistBotCache()
+	end
 	return dirty
 end
 
@@ -516,6 +519,7 @@ function OnSystemMessage(message)
 				end
 			end
 		end
+		PersistBotCache()
 		return true
 	end
 	return false

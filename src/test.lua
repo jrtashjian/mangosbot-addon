@@ -331,6 +331,54 @@ check("Reaction Strategies stores react", botTable[bot].strategy.react[1] == "po
 OnWhisper('Dead Strategies: ghost', bot)
 check("Dead Strategies stores dead", botTable[bot].strategy.dead[1] == "ghost")
 
+-- Server strategy names carry spaces; checkbox lookup must use them, not tokens.
+OnWhisper('Combat Strategies: conserve mana, mark rti, frost', bot)
+check("spaced name matches checkbox lookup", BotHasStrategy(botTable[bot], "conserve mana") == true)
+check("spaced mark rti matches checkbox lookup", BotHasStrategy(botTable[bot], "mark rti") == true)
+check("underscore token does not match server name", BotHasStrategy(botTable[bot], "conserve_mana") == false)
+
+-- Behavior checkbox items map to the engine the strategy lives in (AiFactory).
+local behaviorItem = {}
+for gi = 1, table.getn(BEHAVIOR_GROUPS) do
+	local g = BEHAVIOR_GROUPS[gi]
+	for i = 1, table.getn(g.items) do
+		behaviorItem[g.items[i].token] = g.items[i]
+	end
+end
+check("potions toggles reaction engine", behaviorItem["potions"].engines[1] == "react")
+check("food toggles noncombat engine", behaviorItem["food"].engines[1] == "nc")
+check("boost toggles combat engine", behaviorItem["boost"].engines[1] == "co")
+check("buff toggles combat and noncombat",
+    behaviorItem["buff"].engines[1] == "co" and behaviorItem["buff"].engines[2] == "nc")
+check("conserve mana uses server name", behaviorItem["conserve_mana"].name == "conserve mana")
+check("mark rti uses server name", behaviorItem["mark_rti"].name == "mark rti")
+
+-- Class spec checkboxes map to real playerbots strategy names and toggle all engines.
+check("druid spec uses real name", CLASS_STRATEGIES.DRUID[1].token == "tank feral")
+check("druid spec toggles all engines", CLASS_STRATEGIES.DRUID[1].engines[1] == "all")
+check("hunter spec beast mastery", CLASS_STRATEGIES.HUNTER[1].token == "beast mastery")
+check("deathknight spec frost", CLASS_STRATEGIES.DEATHKNIGHT[2].token == "frost")
+local classTokens = {}
+for _, list in pairs(CLASS_STRATEGIES) do
+	for i = 1, table.getn(list) do
+		classTokens[list[i].token] = true
+	end
+end
+check("no dead class tokens remain", classTokens["bear"] == nil and classTokens["dps"] == nil
+    and classTokens["bdeath"] == nil and classTokens["caster"] == nil)
+
+-- An `all ±spec,?` toggle updates every engine list; display stays consistent.
+OnWhisper('Combat Strategies: tank feral, frost', bot)
+OnWhisper('Non Combat Strategies: tank feral, food', bot)
+OnWhisper('Reaction Strategies: tank feral, react', bot)
+OnWhisper('Dead Strategies: tank feral, ghost', bot)
+check("spec in any engine shows checked", BotHasStrategy(botTable[bot], "tank feral") == true)
+OnWhisper('Combat Strategies: frost', bot)
+OnWhisper('Non Combat Strategies: food', bot)
+OnWhisper('Reaction Strategies: react', bot)
+OnWhisper('Dead Strategies: ghost', bot)
+check("all toggle removes spec everywhere", BotHasStrategy(botTable[bot], "tank feral") == false)
+
 -- Short engine prefixes
 OnWhisper('co Strategies: blood, tank', bot)
 check("co Strategies: short prefix", botTable[bot].strategy.co[1] == "blood")
@@ -366,11 +414,18 @@ check("rti parse", botTable[bot].rti == "skull")
 OnWhisper('rti cc: moon', bot)
 check("rti cc parse", botTable[bot].rti_cc == "moon")
 
-OnWhisper('rti set to cross', bot)
+OnWhisper('rti set to: cross', bot)
 check("rti set to", botTable[bot].rti == "cross")
 
-OnWhisper('rti cc set to diamond', bot)
+OnWhisper('rti cc set to: diamond', bot)
 check("rti cc set to", botTable[bot].rti_cc == "diamond")
+
+-- Set-to acks carry the new value, so they parse directly (no re-query needed).
+OnWhisper('Formation set to: arrow', bot)
+check("Formation set to parsed", botTable[bot].formation == "arrow")
+
+OnWhisper('Stance set to: tank', bot)
+check("Stance set to parsed", botTable[bot].stance == "tank")
 
 -- BOT\t framed payload
 OnWhisper('BOT\tFormation: |cff00ff00arrow|r', bot)
@@ -499,6 +554,44 @@ check("generated rti moon last index", rtiBtns["rti_moon"].index == 7)
 local rtiCcBtns = CreateRtiCcToolBar(rtiHost, 0, "test_rti_cc", false, 0, 0, false)
 check("generated rti cc moon command", rtiCcBtns["rti_moon"].command[0] == "rti cc moon")
 check("generated rti cc moon field", rtiCcBtns["rti_moon"].rti_cc == "moon")
+
+-- Persist last-known config; live stats stay session-only.
+botTable["CacheBot"] = {
+	class = "Warrior",
+	role = "tank",
+	formation = "near",
+	stance = "behind",
+	savemana = "3",
+	loot = "gray",
+	rti = "skull",
+	rti_cc = "moon",
+	strategy = { co = { "frost" }, nc = { "food" }, react = { "potions" } },
+	online = true,
+	money = "12g",
+	bagFree = 4,
+	bagTotal = 16,
+	xp = "1/2%",
+}
+PersistBotCache()
+check("persist writes formation", MangosbotDB.bots.CacheBot.formation == "near")
+check("persist writes strategy", MangosbotDB.bots.CacheBot.strategy.co[1] == "frost")
+check("persist skips money", MangosbotDB.bots.CacheBot.money == nil)
+check("persist skips online", MangosbotDB.bots.CacheBot.online == nil)
+check("group state complete", BotHasGroupState(botTable["CacheBot"]) == true)
+check("panel state complete", BotHasPanelState(botTable["CacheBot"]) == true)
+check("group state incomplete", BotHasGroupState({ formation = "near" }) == false)
+check("party query skipped when not grouped", PartyNeedsStateQuery() == false)
+
+botTable = {}
+RestoreBotCache()
+check("restore formation", botTable["CacheBot"].formation == "near")
+check("restore class", botTable["CacheBot"].class == "Warrior")
+check("restore strategy", botTable["CacheBot"].strategy.nc[1] == "food")
+check("restore leaves online unset", botTable["CacheBot"].online == nil)
+check("restore leaves money unset", botTable["CacheBot"].money == nil)
+
+OnWhisper("Formation set to: arrow", "CacheBot")
+check("whisper persist updates cache", MangosbotDB.bots.CacheBot.formation == "arrow")
 
 -- Classic client detection
 GetBuildInfo = function() return "1.12.1", "5875", "Sep 19 2006", 11000 end

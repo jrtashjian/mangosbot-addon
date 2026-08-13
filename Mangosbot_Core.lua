@@ -144,6 +144,110 @@ CommandSeparator = "\\\\"
 DropDownMenu = {}
 botTable = {}
 
+-- Config fields survive reload. Live stats (money/xp/bags/dur/online) do not.
+local BOT_CACHE_FIELDS = {
+	"class",
+	"role",
+	"strategy",
+	"formation",
+	"stance",
+	"savemana",
+	"loot",
+	"rti",
+	"rti_cc",
+}
+
+local function CopyTable(src)
+	if src == nil then
+		return nil
+	end
+	local dst = {}
+	for k, v in pairs(src) do
+		if type(v) == "table" then
+			dst[k] = CopyTable(v)
+		else
+			dst[k] = v
+		end
+	end
+	return dst
+end
+
+local function EnsureBotCache()
+	if MangosbotDB == nil then
+		MangosbotDB = {}
+	end
+	if MangosbotDB.bots == nil then
+		MangosbotDB.bots = {}
+	end
+	return MangosbotDB.bots
+end
+
+function PersistBotCache()
+	local bots = {}
+	for name, bot in pairs(botTable) do
+		local snap = {}
+		for i = 1, table.getn(BOT_CACHE_FIELDS) do
+			local key = BOT_CACHE_FIELDS[i]
+			if bot[key] ~= nil then
+				if type(bot[key]) == "table" then
+					snap[key] = CopyTable(bot[key])
+				else
+					snap[key] = bot[key]
+				end
+			end
+		end
+		bots[name] = snap
+	end
+	EnsureBotCache()
+	MangosbotDB.bots = bots
+end
+
+function RestoreBotCache()
+	local bots = EnsureBotCache()
+	for name, cached in pairs(bots) do
+		if botTable[name] == nil then
+			botTable[name] = {}
+		end
+		local bot = botTable[name]
+		for i = 1, table.getn(BOT_CACHE_FIELDS) do
+			local key = BOT_CACHE_FIELDS[i]
+			if cached[key] ~= nil and bot[key] == nil then
+				if type(cached[key]) == "table" then
+					bot[key] = CopyTable(cached[key])
+				else
+					bot[key] = cached[key]
+				end
+			end
+		end
+	end
+end
+
+function BotHasGroupState(bot)
+	return bot ~= nil
+		and bot.formation ~= nil
+		and bot.savemana ~= nil
+		and bot.strategy ~= nil
+		and bot.strategy.co ~= nil
+		and bot.strategy.nc ~= nil
+end
+
+function BotHasPanelState(bot)
+	return BotHasGroupState(bot)
+		and bot.stance ~= nil
+		and bot.loot ~= nil
+		and bot.rti ~= nil
+		and bot.strategy.react ~= nil
+end
+
+function PartyNeedsStateQuery()
+	for name, bot in pairs(botTable) do
+		if BotIsInParty(name) and not BotHasGroupState(bot) then
+			return true
+		end
+	end
+	return false
+end
+
 -- math.fmod is missing on Classic (Lua 5.0); emulate it.
 function fmod(a, b)
 	return a - math.floor(a / b) * b

@@ -48,6 +48,7 @@ do
 end
 
 local Mangosbot_EventFrame = CreateFrame("Frame")
+Mangosbot_EventFrame:RegisterEvent("ADDON_LOADED")
 Mangosbot_EventFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
 Mangosbot_EventFrame:RegisterEvent("CHAT_MSG_WHISPER")
 Mangosbot_EventFrame:RegisterEvent("CHAT_MSG_ADDON")
@@ -85,43 +86,12 @@ local function ShouldHideBotControls()
 		or name == selfName
 end
 
--- Delay so the acked command lands before we re-query the resulting state.
-local function QueueBotStateQuery(command, sender)
-	wait(0.1, function()
-		SendBotAddonCommand(command, "WHISPER", nil, sender)
-	end)
-end
-
--- Playerbots acks are one-shot messages; re-query each so the UI reflects new state.
-local function HandleBotStatusMessage(message, sender)
+-- Acks ("Formation set to: ...") carry the new value and are parsed in OnWhisper;
+-- only roster membership changes need a follow-up query.
+local function HandleBotStatusMessage(message)
 	if string.find(message, "Hello") == 1 or string.find(message, "Goodbye") == 1 then
 		SendBotCommand(".bot list", "SAY")
 		QueryBotParty()
-	end
-	if
-		string.find(message, "Following") == 1
-		or string.find(message, "Staying") == 1
-		or string.find(message, "Fleeing") == 1
-	then
-		QueueBotStateQuery("nc ?", sender)
-	end
-	if string.find(message, "Formation set to") == 1 then
-		QueueBotStateQuery("formation ?", sender)
-	end
-	if string.find(message, "Stance set to") == 1 then
-		QueueBotStateQuery("stance ?", sender)
-	end
-	if string.find(message, "Loot strategy set to ") == 1 then
-		QueueBotStateQuery("ll ?", sender)
-	end
-	if string.find(message, "rti set to") == 1 then
-		QueueBotStateQuery("rti ?", sender)
-	end
-	if string.find(message, "rti cc set to") == 1 then
-		QueueBotStateQuery("rti cc ?", sender)
-	end
-	if string.find(message, "save mana") == 1 then
-		QueueBotStateQuery("save mana ?", sender)
 	end
 end
 
@@ -173,7 +143,7 @@ local function OnBotChat(eventName, message, sender)
 	local rosterOpen = BotRoster:IsVisible()
 	local panelOpen = MangosbotBotFrame and MangosbotBotFrame:IsVisible()
 	if rosterOpen or panelOpen then
-		HandleBotStatusMessage(message, sender)
+		HandleBotStatusMessage(message)
 		if dirty then
 			UpdateGroupToolBar()
 		end
@@ -186,6 +156,13 @@ end
 
 Mangosbot_EventFrame:SetScript("OnEvent", function(self, eventName, a1, a2, a3, a4)
 	eventName, a1, a2, a3, a4 = MB_EventArgs(self, eventName, a1, a2, a3, a4)
+
+	if eventName == "ADDON_LOADED" then
+		if a1 == "Mangosbot" then
+			RestoreBotCache()
+		end
+		return
+	end
 
 	if eventName == "PLAYER_TARGET_CHANGED" then
 		OnTargetChanged()
@@ -217,9 +194,17 @@ function SlashCmdList.MANGOSBOT(msg)
 		if BotRoster:IsVisible() then
 			BotRoster:Hide()
 		else
-			BotRoster.ShowRequest = true
+			if botCount() > 0 then
+				BotRoster:Show()
+				RefreshBotRoster()
+				UpdateGroupToolBar()
+			else
+				BotRoster.ShowRequest = true
+			end
 			SendBotCommand(".bot list", "SAY")
-			QueryBotParty()
+			if PartyNeedsStateQuery() then
+				QueryBotParty()
+			end
 		end
 		return
 	end
