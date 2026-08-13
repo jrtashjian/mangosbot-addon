@@ -1454,17 +1454,11 @@ function CreateBotPanel()
 	frame.contentHeight = y + 8
 	LayoutContentHeight(frame)
 
-	if UIPanelWindows ~= nil then
-		UIPanelWindows["MangosbotBotFrame"] = { area = "left", pushable = 3, whileDead = 1 }
-	end
-
 	frame:SetScript("OnShow", function()
+		this:ClearAllPoints()
+		this:SetPoint("CENTER", UIParent, "CENTER")
 		if CurrentBot == nil then
-			if HideUIPanel then
-				HideUIPanel(this)
-			else
-				this:Hide()
-			end
+			this:Hide()
 		else
 			RefreshBotPanel()
 		end
@@ -1511,11 +1505,8 @@ function ShowBotPanelFor(name)
 	if f == nil then
 		return
 	end
-	if ShowUIPanel then
-		ShowUIPanel(f)
-	else
-		f:Show()
-	end
+	-- This movable custom panel must not be repositioned by Blizzard's UIPanel layout.
+	f:Show()
 	RefreshBotPanel()
 end
 
@@ -1525,11 +1516,7 @@ function HideBotPanel()
 	if f == nil then
 		return
 	end
-	if HideUIPanel then
-		HideUIPanel(f)
-	else
-		f:Hide()
-	end
+	f:Hide()
 end
 
 local function RebuildClassSection(f, clsKey)
@@ -1619,6 +1606,14 @@ function RefreshBotPanel()
 		f.titleText:SetText(CurrentBot or "Bot")
 	end
 	local cls = GetClassForBot(bot)
+	if (bot.class == nil or bot.class == "Unknown")
+		and targetName == CurrentBot
+		and UnitClass ~= nil then
+		local _, targetClass = UnitClass("target")
+		if targetClass ~= nil and targetClass ~= "" then
+			cls = targetClass
+		end
+	end
 	local clsToken = ClassToken(cls)
 	local color = RAID_CLASS_COLORS[clsToken]
 	if color ~= nil then
