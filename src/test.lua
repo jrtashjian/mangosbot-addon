@@ -284,6 +284,20 @@ check("StartsWith positive", StartsWith("Formation: near", "Formation:") == true
 check("StartsWith negative", StartsWith("Stance: near", "Formation:") == false)
 check("AfterPrefix trims value", AfterPrefix("Formation:  near  ", "Formation:") == "near")
 
+local capA, capB = MB_Match("20/56 Bag", "(%d+)/(%d+) Bag")
+check("MB_Match two captures", capA == "20" and capB == "56")
+check("MB_Match nil on miss", MB_Match("Formation: near", "(%d+)/(%d+) Bag") == nil)
+check("MB_Match nil input", MB_Match(nil, "(%d+)") == nil)
+
+local savedGetUnitName = GetUnitName
+GetUnitName = function() return "FromGet" end
+check("MB_UnitName prefers GetUnitName", MB_UnitName("target") == "FromGet")
+GetUnitName = nil
+UnitName = function() return "FromUnit" end
+check("MB_UnitName falls back to UnitName", MB_UnitName("target") == "FromUnit")
+GetUnitName = savedGetUnitName
+UnitName = function() return nil end
+
 check("tablelength counts entries", tablelength({a=1,b=2,c=3}) == 3)
 
 local ordered = {}
@@ -447,43 +461,9 @@ check("wait defers while delay remains", delayed == 0)
 waitFrame.script()
 check("wait runs callback after enough ticks", delayed == 1)
 
--- QueryBotPartyStats staggers a stats whisper to each party bot
-OnSystemMessage('Bot roster: +BotA Warrior, +BotB Mage, +BotC Priest')
-GetNumPartyMembers = function() return 3 end
-GetNumRaidMembers = function() return 0 end
-UnitName = function(unit)
-    if unit == "party1" then return "BotA" end
-    if unit == "party2" then return "BotB" end
-    if unit == "party3" then return "BotC" end
-    return nil
-end
-local sent = {}
-SendChatMessage = function(text, chat, _lang, target)
-    sent[#sent + 1] = { text = text, chat = chat, target = target }
-end
-fakeTime = 5000
-QueryBotPartyStats()
-for _ = 1, 12 do waitFrame.script() end
-check("QueryBotPartyStats whispers each party bot", #sent == 3)
-check("QueryBotPartyStats uses BOT frame + #a stats",
-    sent[1].text == "BOT\t#a stats" and sent[1].chat == "WHISPER" and sent[1].target == "BotA")
-check("QueryBotPartyStats targets last party bot", sent[3].target == "BotC")
-
-sent = {}
-QueryBotPartyStats()
-for _ = 1, 12 do waitFrame.script() end
-check("QueryBotPartyStats throttles within interval", #sent == 0)
-
-fakeTime = 5000 + PARTY_STATS_MIN_INTERVAL
-sent = {}
-QueryBotPartyStats()
-for _ = 1, 12 do waitFrame.script() end
-check("QueryBotPartyStats allows after interval", #sent == 3)
-
-SendChatMessage = function() end
-GetNumPartyMembers = function() return 0 end
-GetNumRaidMembers = function() return 0 end
-UnitName = function() return nil end
+check("OnWhisper dirty on formation", OnWhisper("Formation: near", bot) == true)
+check("OnWhisper clean on hello", OnWhisper("Hello there", bot) == false)
+check("OnWhisper clean on nil", OnWhisper(nil, bot) == false)
 
 -- Button state matching (shared by roster group bar + selected panel)
 local matchBot = {

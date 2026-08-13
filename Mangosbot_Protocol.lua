@@ -119,39 +119,6 @@ function QuerySelectedBot(name)
 	end)
 end
 
--- Real-time minimum gap between stats queries per bot (wait() is frame-tick based, not seconds).
-PARTY_STATS_MIN_INTERVAL = 60
-
--- Ask each party bot for its stats (money, bag space), staggered to avoid a whisper burst.
--- Per-bot GetTime throttle so PARTY_MEMBERS_CHANGED spam cannot flood.
-function QueryBotPartyStats()
-	local now = 0
-	if GetTime then
-		now = GetTime()
-	end
-	local delay = 0
-	local queued = 0
-	for i = 1, 5 do
-		local name = partyName(i)
-		local bot = nil
-		if name ~= nil then
-			bot = botTable[name]
-		end
-		if bot ~= nil then
-			local last = bot["lastStatsQuery"]
-			if last == nil or (now - last) >= PARTY_STATS_MIN_INTERVAL then
-				bot["lastStatsQuery"] = now
-				wait(0.1 + delay, function(target)
-					SendBotCommand(EnsureAddonPrefix("stats"), "WHISPER", nil, target)
-				end, name)
-				delay = delay + 0.5
-				queued = queued + 1
-			end
-		end
-	end
-	return queued
-end
-
 -- ---------------------------------------------------------------------------
 -- Hide protocol chatter from the default chat frames (safety net + outgoing)
 -- ---------------------------------------------------------------------------
@@ -347,13 +314,13 @@ function ParseStatsReply(message)
 	if message == nil then
 		return nil
 	end
-	local bagFree, bagTotal = string.match(message, "(%d+)/(%d+) Bag")
+	local bagFree, bagTotal = MB_Match(message, "(%d+)/(%d+) Bag")
 	if bagFree == nil then
 		return nil
 	end
-	local money = string.match(message, "^([^,]*)")
-	local durability = string.match(message, "(%d+%%[^,]-)%s*Dur")
-	local xp = string.match(message, "([^,]+)%s*XP")
+	local money = MB_Match(message, "^([^,]*)")
+	local durability = MB_Match(message, "(%d+%%[^,]-)%s*Dur")
+	local xp = MB_Match(message, "([^,]+)%s*XP")
 	return {
 		money = trim2(money),
 		bagFree = tonumber(bagFree),
@@ -365,7 +332,7 @@ end
 
 function OnWhisper(message, sender)
 	if message == nil or sender == nil then
-		return
+		return false
 	end
 	message = NormalizeMessage(message)
 
@@ -378,6 +345,7 @@ function OnWhisper(message, sender)
 		botTable[sender] = {}
 	end
 	local bot = botTable[sender]
+	local dirty = false
 
 	local strategyType, body
 	body = AfterPrefix(message, "Combat Strategies:")
@@ -437,56 +405,67 @@ function OnWhisper(message, sender)
 	end
 	if strategyType ~= nil and body ~= nil then
 		ParseStrategyList(bot, strategyType, body)
+		dirty = true
 	end
 
 	body = AfterPrefix(message, "Formation:")
 	if body ~= nil then
 		bot["formation"] = string.lower(body)
+		dirty = true
 	end
 
 	body = AfterPrefix(message, "Stance:")
 	if body ~= nil then
 		bot["stance"] = string.lower(body)
+		dirty = true
 	end
 
 	body = AfterPrefix(message, "Mana save level set:")
 	if body ~= nil then
 		bot["savemana"] = body
+		dirty = true
 	end
 
 	body = AfterPrefix(message, "Mana save level:")
 	if body ~= nil then
 		bot["savemana"] = body
+		dirty = true
 	end
 
 	body = AfterPrefix(message, "Loot strategy set to")
 	if body ~= nil then
 		bot["loot"] = body
+		dirty = true
 	end
 
 	body = AfterPrefix(message, "Loot strategy:")
 	if body ~= nil then
 		bot["loot"] = body
+		dirty = true
 	end
 
 	body = AfterPrefix(message, "rti cc set to")
 	if body ~= nil then
 		bot["rti_cc"] = body
+		dirty = true
 	end
 
 	body = AfterPrefix(message, "rti set to")
 	if body ~= nil then
 		bot["rti"] = body
+		dirty = true
 	end
 
 	body = AfterPrefix(message, "rti cc:")
 	if body ~= nil then
 		bot["rti_cc"] = body
+		dirty = true
 	end
 
 	body = AfterPrefix(message, "rti:")
 	if body ~= nil then
 		bot["rti"] = body
+		dirty = true
 	end
 
 	local stats = ParseStatsReply(message)
@@ -496,7 +475,9 @@ function OnWhisper(message, sender)
 		bot["bagTotal"] = stats.bagTotal
 		bot["durability"] = stats.durability
 		bot["xp"] = stats.xp
+		dirty = true
 	end
+	return dirty
 end
 
 function OnSystemMessage(message)
@@ -525,7 +506,7 @@ function OnSystemMessage(message)
 					botTable[name]["class"] = cls
 					botTable[name]["online"] = (on == "+")
 
-					-- Keep cached role/stats across roster rebuilds (badges + control panel).
+					-- Keep cached role/stats across roster rebuilds (control panel).
 					local prior = previous[name]
 					if prior ~= nil then
 						local keep = {
@@ -542,7 +523,6 @@ function OnSystemMessage(message)
 							"loot",
 							"rti",
 							"rti_cc",
-							"lastStatsQuery",
 						}
 						for k = 1, table.getn(keep) do
 							local key = keep[k]

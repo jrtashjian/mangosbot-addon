@@ -25,18 +25,12 @@ function ToolBarButtonOnClick(btn, visual)
 	end
 
 	if btn["group"] then
-		local delay = 0
 		local combined = CombineBotCommands(btn["command"])
 		wait(0, function(cmd)
 			SendBotCommand(cmd, "PARTY")
 		end, combined)
-		if btn["tooltip"] ~= nil then
-			wait(delay + 1, function(command)
-				SendBotAddonCommand(command, "PARTY")
-			end, btn["tooltip"])
-		end
 	else
-		local bot = GetUnitName("target")
+		local bot = MB_UnitName("target")
 		if bot == nil then
 			bot = CurrentBot
 		end
@@ -132,10 +126,13 @@ end
 
 
 function StartChat()
-	local editBox = getglobal("ChatFrameEditBox")
+	local editBox = MB_ChatEditBox()
+	if editBox == nil then
+		return
+	end
 	editBox:Show()
 	editBox:SetFocus()
-	local name = GetUnitName("target")
+	local name = MB_UnitName("target")
 	if name == nil then
 		name = CurrentBot
 	end
@@ -657,9 +654,9 @@ local function ParseMoneyToCopper(str)
 	if str == "" or str == "0" then
 		return 0
 	end
-	local g = tonumber(string.match(str, "(%d+)%s*[gG]")) or 0
-	local s = tonumber(string.match(str, "(%d+)%s*[sS]")) or 0
-	local c = tonumber(string.match(str, "(%d+)%s*[cC]")) or 0
+	local g = tonumber(MB_Match(str, "(%d+)%s*[gG]")) or 0
+	local s = tonumber(MB_Match(str, "(%d+)%s*[sS]")) or 0
+	local c = tonumber(MB_Match(str, "(%d+)%s*[cC]")) or 0
 	if g == 0 and s == 0 and c == 0 then
 		local n = tonumber(str)
 		if n ~= nil then
@@ -675,18 +672,18 @@ local function ParseXpProgress(xpStr)
 		return nil, nil, nil
 	end
 	xpStr = trim2(xpStr)
-	local a = string.match(xpStr, "(%d+)%s*/%s*%d+%%")
+	local a = MB_Match(xpStr, "(%d+)%s*/%s*%d+%%")
 	if a ~= nil then
 		return tonumber(a), 100, xpStr
 	end
-	local cur, maxv = string.match(xpStr, "(%d+)%s*/%s*(%d+)")
+	local cur, maxv = MB_Match(xpStr, "(%d+)%s*/%s*(%d+)")
 	if cur ~= nil and maxv ~= nil then
 		local m = tonumber(maxv)
 		if m ~= nil and m > 0 then
 			return tonumber(cur), m, xpStr
 		end
 	end
-	local pct = string.match(xpStr, "(%d+)%%")
+	local pct = MB_Match(xpStr, "(%d+)%%")
 	if pct ~= nil then
 		return tonumber(pct), 100, xpStr
 	end
@@ -867,9 +864,7 @@ local function CreateSettingDropdown(parent, label, opts, onSelect)
 	BP_DROPDOWN_SEQ = BP_DROPDOWN_SEQ + 1
 	local ddName = "MangosbotDD" .. BP_DROPDOWN_SEQ
 	local dd = CreateFrame("Frame", ddName, parent, "UIDropDownMenuTemplate")
-	if UIDropDownMenu_SetWidth then
-		UIDropDownMenu_SetWidth(dd, 160)
-	end
+	MB_DropDownSetWidth(dd, 160)
 
 	local currentValue = nil
 
@@ -1373,11 +1368,11 @@ function CreateBotPanel()
 end
 
 function IsBotPanelTarget()
-	local name = GetUnitName("target")
+	local name = MB_UnitName("target")
 	if name == nil then
 		return false
 	end
-	local selfName = GetUnitName("player")
+	local selfName = MB_UnitName("player")
 	if name == selfName then
 		return false
 	end
@@ -1481,7 +1476,7 @@ function RefreshBotPanel()
 		bot = {}
 	end
 
-	local targetName = GetUnitName("target")
+	local targetName = MB_UnitName("target")
 	if targetName == CurrentBot and UnitExists("target") and SetPortraitTexture then
 		SetPortraitTexture(f.portrait.texture, "target")
 	else
@@ -1768,7 +1763,10 @@ local function SetRosterItemHandlers(item, key)
 	end)
 	whisperBtn["key"] = key
 	whisperBtn:SetScript("OnClick", function()
-		local editBox = getglobal("ChatFrameEditBox")
+		local editBox = MB_ChatEditBox()
+		if editBox == nil then
+			return
+		end
 		editBox:Show()
 		editBox:SetFocus()
 		editBox:SetText("/w " .. whisperBtn["key"] .. " ")
@@ -2007,7 +2005,6 @@ function RefreshBotRoster()
 	end
 	BotRoster:SetWidth(width)
 	BotRoster:SetHeight(y + 22)
-	UpdatePartyBotOverlays()
 end
 
 function createDropdown(opts)
@@ -2088,7 +2085,10 @@ function CreateDropDownMenu(parent)
 		["items"] = BotMenuItems,
 		["defaultVal"] = "",
 		["changeFunc"] = function()
-			local editBox = getglobal("ChatFrameEditBox")
+			local editBox = MB_ChatEditBox()
+			if editBox == nil then
+				return
+			end
 			local id = this:GetID()
 			editBox:Show()
 			editBox:SetFocus()
@@ -2101,7 +2101,7 @@ function CreateDropDownMenu(parent)
 end
 
 function OpenDropDownMenuForCurrentBot()
-	local name = GetUnitName("target")
+	local name = MB_UnitName("target")
 	if name == nil then
 		name = CurrentBot
 	end
@@ -2116,98 +2116,9 @@ function OpenDropDownMenu(bot)
 
 end
 
--- Party frame role/gold/bag badges (disabled for now).
-local PARTY_BOT_OVERLAYS_ENABLED = false
-
-function CreatePartyBotOverlays()
-	local overlays = {}
-	if not PARTY_BOT_OVERLAYS_ENABLED then
-		return overlays
-	end
-	for i = 1, 4 do
-		local parent = getglobal("PartyMemberFrame" .. i)
-		if parent ~= nil then
-			local overlay = CreateFrame("Frame", "PartyBotOverlay" .. i, parent)
-			overlay:SetWidth(70)
-			overlay:SetHeight(44)
-			overlay:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -4, -2)
-			overlay:SetFrameLevel(50)
-			overlay:EnableMouse(false)
-
-			local role = overlay:CreateTexture(nil, "OVERLAY")
-			role:SetPoint("TOPRIGHT", overlay, "TOPRIGHT", 0, 0)
-			role:SetWidth(16)
-			role:SetHeight(16)
-			role:SetTexture("Interface\\Addons\\Mangosbot\\Images\\role_dps.tga")
-			overlay.role = role
-
-			local gold = overlay:CreateFontString()
-			gold:SetPoint("TOPRIGHT", overlay, "TOPRIGHT", 0, -17)
-			gold:SetWidth(70)
-			gold:SetFont("Fonts/FRIZQT__.TTF", 9, "OUTLINE")
-			gold:SetJustifyH("RIGHT")
-			overlay.gold = gold
-
-			local bags = overlay:CreateFontString()
-			bags:SetPoint("TOPRIGHT", overlay, "TOPRIGHT", 0, -29)
-			bags:SetWidth(70)
-			bags:SetFont("Fonts/FRIZQT__.TTF", 9, "OUTLINE")
-			bags:SetJustifyH("RIGHT")
-			overlay.bags = bags
-
-			overlay:Hide()
-			overlays[i] = overlay
-		end
-	end
-	return overlays
-end
-
-function UpdatePartyBotOverlays()
-	if not PARTY_BOT_OVERLAYS_ENABLED or PartyBotOverlays == nil then
-		return
-	end
-	for i = 1, 4 do
-		local overlay = PartyBotOverlays[i]
-		if overlay == nil then
-			return
-		end
-		local bot = botTable[partyName(i)]
-		-- Party members are online by definition; only hide when roster explicitly says offline.
-		if GetNumRaidMembers() > 0 or bot == nil or bot["online"] == false then
-			overlay:Hide()
-		else
-			local role = bot["role"]
-			if role == nil then
-				overlay.role:Hide()
-			else
-				overlay.role:Show()
-				overlay.role:SetTexture("Interface\\Addons\\Mangosbot\\Images\\role_" .. role .. ".tga")
-			end
-
-			local money = bot["money"]
-			if money == nil or money == "" then
-				overlay.gold:SetText("-")
-			else
-				overlay.gold:SetText(money)
-			end
-
-			local bagFree = bot["bagFree"]
-			local bagTotal = bot["bagTotal"]
-			if bagFree == nil or bagTotal == nil then
-				overlay.bags:SetText("-")
-			else
-				overlay.bags:SetText(bagFree .. "/" .. bagTotal)
-			end
-
-			overlay:Show()
-		end
-	end
-end
-
 BotRoster = CreateBotRoster()
 BotDebugPanel = CreateBotDebugPanel()
 DropDownMenu = CreateDropDownMenu(BotRoster)
-PartyBotOverlays = CreatePartyBotOverlays()
 CurrentBot = nil
 
 do

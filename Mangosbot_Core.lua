@@ -73,6 +73,65 @@ function MB_HasDeathKnight()
 	return CLIENT.interface >= 30000
 end
 
+function MB_UnitName(unit)
+	if GetUnitName then
+		return GetUnitName(unit)
+	end
+	if UnitName then
+		return UnitName(unit)
+	end
+	return nil
+end
+
+function MB_Match(s, pattern)
+	if s == nil or pattern == nil then
+		return nil
+	end
+	local _, _, a, b, c, d = string.find(s, pattern)
+	return a, b, c, d
+end
+
+function MB_ChatEditBox()
+	local box = getglobal("ChatFrameEditBox")
+	if box == nil then
+		box = getglobal("ChatFrame1EditBox")
+	end
+	if box == nil and DEFAULT_CHAT_FRAME ~= nil then
+		box = DEFAULT_CHAT_FRAME.editBox
+	end
+	return box
+end
+
+function MB_DropDownSetWidth(frame, width)
+	if not UIDropDownMenu_SetWidth or frame == nil or width == nil then
+		return
+	end
+	if CLIENT.interface < 20000 then
+		UIDropDownMenu_SetWidth(width, frame)
+	else
+		UIDropDownMenu_SetWidth(frame, width)
+	end
+end
+
+function MB_EventArgs(_self, eventName, a1, a2, a3, a4)
+	if eventName == nil then
+		eventName = event
+	end
+	if a1 == nil then
+		a1 = arg1
+	end
+	if a2 == nil then
+		a2 = arg2
+	end
+	if a3 == nil then
+		a3 = arg3
+	end
+	if a4 == nil then
+		a4 = arg4
+	end
+	return eventName, a1, a2, a3, a4
+end
+
 function print(s)
 	if s ~= nil then
 		DEFAULT_CHAT_FRAME:AddMessage(s)
@@ -172,32 +231,40 @@ function tablelength(T)
 	return count
 end
 
-function wait(delay, func, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9)
+function wait(delay, func, a1, a2, a3, a4, a5, a6, a7, a8, a9)
 	if type(delay) ~= "number" or type(func) ~= "function" then
 		return false
 	end
 	if waitFrame == nil then
 		waitFrame = CreateFrame("Frame", "WaitFrame", UIParent)
-		waitFrame:SetScript("OnUpdate", function()
-			local elapse = 0.1
-			local count = tablelength(waitTable)
+		waitFrame:Hide()
+		waitFrame:SetScript("OnUpdate", function(_self, elapsed)
+			elapsed = elapsed or arg1
+			if elapsed == nil or elapsed <= 0 then
+				elapsed = 0.1
+			end
+			local count = table.getn(waitTable)
 			local i = 1
 			while i <= count do
 				local waitRecord = tremove(waitTable, i)
 				local d = tremove(waitRecord, 1)
 				local f = tremove(waitRecord, 1)
 				local p = tremove(waitRecord, 1)
-				if d > elapse then
-					tinsert(waitTable, i, { d - elapse, f, p })
+				if d > elapsed then
+					tinsert(waitTable, i, { d - elapsed, f, p })
 					i = i + 1
 				else
 					count = count - 1
 					f(unpack(p))
 				end
 			end
+			if table.getn(waitTable) == 0 then
+				waitFrame:Hide()
+			end
 		end)
 	end
-	tinsert(waitTable, { delay, func, { arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9 } })
+	tinsert(waitTable, { delay, func, { a1, a2, a3, a4, a5, a6, a7, a8, a9 } })
+	waitFrame:Show()
 	return true
 end
 
