@@ -1,4 +1,4 @@
--- UI: shared primitives, panels, roster/selected refresh, debug, menu, overlays
+-- UI: shared chrome, toolbar state, debug panel
 
 function ClickToolBarButton(toolbar, button)
 	local btn = ToolBars[toolbar][button]
@@ -114,16 +114,6 @@ function EnablePositionSaving(frame, frameName)
 	end -- do-block
 end
 
-function ResizeBotPanel(frame, width, height)
-	frame:SetWidth(width)
-	frame:SetHeight(height)
-	frame.header:SetWidth(frame:GetWidth())
-	frame.header.text:SetWidth(frame.header:GetWidth())
-	for toolbarName in pairs(ToolBars) do
-		frame.toolbar[toolbarName]:SetWidth(frame:GetWidth() - 10)
-	end
-end
-
 
 function StartChat()
 	local editBox = MB_ChatEditBox()
@@ -137,16 +127,6 @@ function StartChat()
 		name = CurrentBot
 	end
 	editBox:SetText("/w " .. name .. " ")
-end
-
-function SetFrameColor(frame, class)
-	local color = RAID_CLASS_COLORS[class]
-	if color == nil then
-		color = { r = 0.5, g = 0.1, b = 0.7 }
-	end
-	frame:SetBackdropBorderColor(color.r, color.g, color.b, 1.0)
-	frame.header:SetBackdropColor(color.r, color.g, color.b, 1.0)
-	frame.header:SetBackdropBorderColor(color.r, color.g, color.b, 1.0)
 end
 
 local STRATEGY_ENGINES = { "nc", "co", "react", "dead" }
@@ -451,7 +431,7 @@ function UpdateBotDebugPanel(message, sender)
 
 end
 
--- Bot panel: Blizzard-style UIPanel opened when a bot is targeted.
+-- Bot panel: UIPanel opened when a bot is targeted
 
 local BP_WIDTH = 384
 local BP_HEIGHT = 512
@@ -638,50 +618,6 @@ function QueryBotPanelState(name)
 	end)
 end
 
--- "12g 34s 5c" / "5g 20s" / "0" -> copper integer
-local function ParseMoneyToCopper(str)
-	if str == nil then
-		return 0
-	end
-	str = trim2(tostring(str))
-	if str == "" or str == "0" then
-		return 0
-	end
-	local g = tonumber(MB_Match(str, "(%d+)%s*[gG]")) or 0
-	local s = tonumber(MB_Match(str, "(%d+)%s*[sS]")) or 0
-	local c = tonumber(MB_Match(str, "(%d+)%s*[cC]")) or 0
-	if g == 0 and s == 0 and c == 0 then
-		local n = tonumber(str)
-		if n ~= nil then
-			return n
-		end
-	end
-	return g * 10000 + s * 100 + c
-end
-
--- bot.xp examples: "78/200%", "1234/5000", "45%"
-local function ParseXpProgress(xpStr)
-	if xpStr == nil or xpStr == "" then
-		return nil, nil, nil
-	end
-	xpStr = trim2(xpStr)
-	local a = MB_Match(xpStr, "(%d+)%s*/%s*%d+%%")
-	if a ~= nil then
-		return tonumber(a), 100, xpStr
-	end
-	local cur, maxv = MB_Match(xpStr, "(%d+)%s*/%s*(%d+)")
-	if cur ~= nil and maxv ~= nil then
-		local m = tonumber(maxv)
-		if m ~= nil and m > 0 then
-			return tonumber(cur), m, xpStr
-		end
-	end
-	local pct = MB_Match(xpStr, "(%d+)%%")
-	if pct ~= nil then
-		return tonumber(pct), 100, xpStr
-	end
-	return nil, nil, xpStr
-end
 
 local function CreateMoneyDisplay(parent)
 	local f = CreateFrame("Frame", nil, parent)
@@ -1541,6 +1477,8 @@ function RefreshBotPanel()
 	end
 end
 
+-- Roster window and More-menu dropdown
+
 function CreateBotRoster()
 	local frame = CreateFrame("Frame", "BotRoster", UIParent)
 	frame:Hide()
@@ -2107,40 +2045,4 @@ function OpenDropDownMenu(bot)
 	MenuForBot = bot
 	ToggleDropDownMenu(1, nil, DropDownMenu, "cursor")
 
-end
-
-BotRoster = CreateBotRoster()
-BotDebugPanel = CreateBotDebugPanel()
-DropDownMenu = CreateDropDownMenu(BotRoster)
-CurrentBot = nil
-
-do
-	local ok, result = pcall(CreateBotPanel)
-	if ok and result ~= nil then
-		MangosbotBotFrame = result
-	else
-		local err = result
-		local frame = nil
-		if getglobal ~= nil then
-			frame = getglobal("MangosbotBotFrame")
-		end
-		if frame == nil then
-			frame = CreateFrame("Frame", "MangosbotBotFrame", UIParent)
-		end
-		if frame ~= nil then
-			MangosbotBotFrame = frame
-			frame:Hide()
-		end
-		if err ~= nil then
-			print("Mangosbot: BotPanel create failed: " .. tostring(err))
-		end
-	end
-end
-
-local _missing = {}
-if BotRoster == nil then table.insert(_missing, "BotRoster") end
-if BotDebugPanel == nil then table.insert(_missing, "BotDebugPanel") end
-if MangosbotBotFrame == nil then table.insert(_missing, "MangosbotBotFrame") end
-if table.getn(_missing) > 0 then
-	print("Mangosbot: UI init incomplete (" .. table.concat(_missing, ", ") .. ")")
 end

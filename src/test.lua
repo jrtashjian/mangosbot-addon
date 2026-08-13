@@ -257,6 +257,7 @@ assert(loadfile("../Mangosbot_Core.lua"))()
 assert(loadfile("../Mangosbot_Protocol.lua"))()
 assert(loadfile("../Mangosbot_Commands.lua"))()
 assert(loadfile("../Mangosbot_UI.lua"))()
+assert(loadfile("../Mangosbot.lua"))()
 
 check("MangosbotBotFrame created at load", MangosbotBotFrame ~= nil)
 check("BotRoster created at load", BotRoster ~= nil)
@@ -396,6 +397,12 @@ check("stats zero money bags", botTable[bot].bagFree == 16 and botTable[bot].bag
 	check("ParseStatsReply plain line", stats.money == "5g 20s" and stats.bagFree == 30 and stats.bagTotal == 40 and stats.durability == "80% (0)")
 check("ParseStatsReply nil on non-stats", ParseStatsReply('Formation: near') == nil)
 check("ParseStatsReply nil on nil", ParseStatsReply(nil) == nil)
+check("ParseMoneyToCopper g/s/c", ParseMoneyToCopper("12g 34s 5c") == 123405)
+check("ParseMoneyToCopper zero", ParseMoneyToCopper("0") == 0)
+local xpCur, xpMax = ParseXpProgress("78/200%")
+check("ParseXpProgress percent pair", xpCur == 78 and xpMax == 100)
+local xp2, xp2m = ParseXpProgress("45%")
+check("ParseXpProgress bare percent", xp2 == 45 and xp2m == 100)
 
 check("IsBotProtocolMessage stats reply",
     IsBotProtocolMessage('12g 34s 5c, |h|cff00ff0020/56|h|cffffffff Bag, 100% (0) Dur') == true)

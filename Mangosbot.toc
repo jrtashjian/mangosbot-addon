@@ -4,5 +4,10 @@
 ## Notes: MangosBot UI
 ## DefaultState: Enabled
 ## LoadOnDemand: 0
-##SavedVariables: frameopts
-Mangosbot.xml
+## SavedVariables: frameopts
+Mangosbot_Core.lua
+Mangosbot_Protocol.lua
+Mangosbot_Commands.lua
+Mangosbot_UI.lua
+Mangosbot.lua
+Mangosbot_Localization.en.lua

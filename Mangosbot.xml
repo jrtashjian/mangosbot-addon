@@ -4,5 +4,5 @@
     <Script file="Mangosbot_Commands.lua"/>
     <Script file="Mangosbot_UI.lua"/>
     <Script file="Mangosbot.lua"/>
-    <Script file="Mangosbot_Localization.en.lua" />
+    <Script file="Mangosbot_Localization.en.lua"/>
 </Ui>

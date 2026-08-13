@@ -1,3 +1,52 @@
+if CreateBotRoster == nil or CreateBotDebugPanel == nil or CreateDropDownMenu == nil then
+	DEFAULT_CHAT_FRAME:AddMessage("Mangosbot: Mangosbot_UI.lua did not load")
+	return
+end
+
+CurrentBot = nil
+BotRoster = CreateBotRoster()
+BotDebugPanel = CreateBotDebugPanel()
+DropDownMenu = CreateDropDownMenu(BotRoster)
+
+do
+	local ok, result = pcall(CreateBotPanel)
+	if ok and result ~= nil then
+		MangosbotBotFrame = result
+	else
+		local err = result
+		local frame = nil
+		if getglobal ~= nil then
+			frame = getglobal("MangosbotBotFrame")
+		end
+		if frame == nil then
+			frame = CreateFrame("Frame", "MangosbotBotFrame", UIParent)
+		end
+		if frame ~= nil then
+			MangosbotBotFrame = frame
+			frame:Hide()
+		end
+		if err ~= nil then
+			print("Mangosbot: BotPanel create failed: " .. tostring(err))
+		end
+	end
+end
+
+do
+	local missing = {}
+	if BotRoster == nil then
+		table.insert(missing, "BotRoster")
+	end
+	if BotDebugPanel == nil then
+		table.insert(missing, "BotDebugPanel")
+	end
+	if MangosbotBotFrame == nil then
+		table.insert(missing, "MangosbotBotFrame")
+	end
+	if table.getn(missing) > 0 then
+		print("Mangosbot: UI init incomplete (" .. table.concat(missing, ", ") .. ")")
+	end
+end
+
 local Mangosbot_EventFrame = CreateFrame("Frame")
 Mangosbot_EventFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
 Mangosbot_EventFrame:RegisterEvent("CHAT_MSG_WHISPER")

@@ -330,6 +330,51 @@ function ParseStatsReply(message)
 	}
 end
 
+-- "12g 34s 5c" / "5g 20s" / "0" -> copper integer
+function ParseMoneyToCopper(str)
+	if str == nil then
+		return 0
+	end
+	str = trim2(tostring(str))
+	if str == "" or str == "0" then
+		return 0
+	end
+	local g = tonumber(MB_Match(str, "(%d+)%s*[gG]")) or 0
+	local s = tonumber(MB_Match(str, "(%d+)%s*[sS]")) or 0
+	local c = tonumber(MB_Match(str, "(%d+)%s*[cC]")) or 0
+	if g == 0 and s == 0 and c == 0 then
+		local n = tonumber(str)
+		if n ~= nil then
+			return n
+		end
+	end
+	return g * 10000 + s * 100 + c
+end
+
+-- bot.xp examples: "78/200%", "1234/5000", "45%"
+function ParseXpProgress(xpStr)
+	if xpStr == nil or xpStr == "" then
+		return nil, nil, nil
+	end
+	xpStr = trim2(xpStr)
+	local a = MB_Match(xpStr, "(%d+)%s*/%s*%d+%%")
+	if a ~= nil then
+		return tonumber(a), 100, xpStr
+	end
+	local cur, maxv = MB_Match(xpStr, "(%d+)%s*/%s*(%d+)")
+	if cur ~= nil and maxv ~= nil then
+		local m = tonumber(maxv)
+		if m ~= nil and m > 0 then
+			return tonumber(cur), m, xpStr
+		end
+	end
+	local pct = MB_Match(xpStr, "(%d+)%%")
+	if pct ~= nil then
+		return tonumber(pct), 100, xpStr
+	end
+	return nil, nil, xpStr
+end
+
 -- First matching prefix wins. Longer labels must precede "Strategies:".
 local STRATEGY_PREFIXES = {
 	{ prefix = "Combat Strategies:", type = "co" },
