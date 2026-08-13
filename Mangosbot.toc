@@ -1,6 +1,7 @@
 ## Interface: 30300
 ## Title: MangosBot
-## Author: ike3
+## Version: 0.1.0
+## Author: ike3, jrtashjian
 ## Notes: MangosBot UI
 ## DefaultState: Enabled
 ## LoadOnDemand: 0
