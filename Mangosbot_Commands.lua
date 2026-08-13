@@ -136,7 +136,7 @@ function CreateMovementToolBar(frame, y, name, group, x, spacing, register)
 	local tb = {
 		["follow_master"] = {
 			icon = "follow_master",
-			command = { [0] = "#a follow", [1] = "#a nc ?", [2] = "#a co ?" },
+			command = { [0] = "#a follow", [1] = "#a all ?" },
 			strategy = "follow",
 			tooltip = "Follow me",
 			index = 0,
@@ -145,7 +145,7 @@ function CreateMovementToolBar(frame, y, name, group, x, spacing, register)
 		},
 		["stay"] = {
 			icon = "stay",
-			command = { [0] = "#a stay", [1] = "#a nc ?", [2] = "#a co ?" },
+			command = { [0] = "#a stay", [1] = "#a all ?" },
 			strategy = "stay",
 			tooltip = "Stay in place",
 			index = 1,
@@ -168,7 +168,7 @@ function CreateMovementToolBar(frame, y, name, group, x, spacing, register)
 
 	tb["flee_passive"] = {
 		icon = "flee_passive",
-		command = { [0] = "#a flee", [1] = "#a nc ?", [2] = "#a co ?" },
+		command = { [0] = "#a flee", [1] = "#a all ?" },
 		strategy = "",
 		tooltip = "Ignore everything and follow master",
 		index = index,

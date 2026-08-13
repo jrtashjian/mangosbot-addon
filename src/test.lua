@@ -613,9 +613,11 @@ check("loot label matches keyword", BotLootLabel("gray") == "Gray items")
 check("loot label matches trade skills",
     BotLootLabel("equip,vendor,quest,skill,use") == "Trade skills")
 
--- SendStrategyToggle sends a bare toggle, then debounces the re-query of the
--- engines touched during a burst (no ",?" on the toggle: the delayed query wins
--- over any stale panel-open reply and reflects post-settle strategy state).
+-- SendStrategyToggle buffers toggles per engine during a burst and flushes them
+-- as one combined command per engine after a quiet period, then re-queries all
+-- states at once with "all ?" once the AI settles (no ",?" on the toggle: the
+-- delayed query wins over any stale panel-open reply and reflects post-settle
+-- strategy state).
 for _ = 1, 12 do waitFrame.script() end -- drain any leftover wait records
 local sentCommands = {}
 local realSendChatMessage = SendChatMessage
@@ -627,39 +629,62 @@ botTable["ToggleBot"] = { strategy = { nc = {}, co = {}, react = {}, dead = {} }
 local foodCheckbox = MangosbotBotFrame.checkboxes["food"]
 this = foodCheckbox
 foodCheckbox.script()
+check("toggle buffers until quiet", #sentCommands == 0)
+for _ = 1, 4 do waitFrame.script() end -- 0.4s > the 0.3s flush delay
 check("toggle sends bare engine command", sentCommands[1] == "BOT\tnc -food")
-check("toggle sends no query on the toggle", #sentCommands == 1)
+check("toggle sends nothing else before settle", #sentCommands == 1)
 -- 12 ticks = 1.2s > the 0.6s re-query delay; generous to absorb the harness's
 -- exact-0.1s float drift (0.6-0.1*5 == 0.10000000000000003 > 0.1).
 for _ = 1, 12 do waitFrame.script() end
-check("toggle re-queries engine after settle", sentCommands[2] == "BOT\tnc ?")
-check("toggle re-query only its engine", #sentCommands == 2)
+check("toggle re-queries all states after settle", sentCommands[2] == "BOT\tall ?")
+check("toggle re-query sends just the one", #sentCommands == 2)
 
--- A burst of toggles collapses to one re-query per engine touched.
+-- A burst of same-engine toggles collapses into one combined command.
+sentCommands = {}
+local lootCheckbox = MangosbotBotFrame.checkboxes["loot"]
+this = foodCheckbox
+foodCheckbox.script()
+this = lootCheckbox
+lootCheckbox.script()
+check("combined burst buffers both toggles", #sentCommands == 0)
+for _ = 1, 4 do waitFrame.script() end
+check("combined burst sends one message per engine", #sentCommands == 1)
+check("combined burst joins toggles with commas", sentCommands[1] == "BOT\tnc -food,-loot")
+for _ = 1, 12 do waitFrame.script() end
+check("combined burst re-queries once", sentCommands[2] == "BOT\tall ?")
+check("combined burst total two messages", #sentCommands == 2)
+
+-- A burst across engines flushes one message each, then a single all re-query.
 sentCommands = {}
 local potionsCheckbox = MangosbotBotFrame.checkboxes["potions"]
 this = foodCheckbox
 foodCheckbox.script()
 this = potionsCheckbox
 potionsCheckbox.script()
-check("burst sends both toggles immediately", #sentCommands == 2)
+check("cross-engine burst buffers all toggles", #sentCommands == 0)
+for _ = 1, 4 do waitFrame.script() end
+check("cross-engine burst flushes per engine", #sentCommands == 2)
+check("cross-engine burst nc command", sentCommands[1] == "BOT\tnc -food")
+check("cross-engine burst react command", sentCommands[2] == "BOT\treact -potions")
 for _ = 1, 12 do waitFrame.script() end
-check("burst re-queries each touched engine once", #sentCommands == 4)
-check("burst nc re-query", sentCommands[3] == "BOT\tnc ?")
-check("burst react re-query", sentCommands[4] == "BOT\treact ?")
+check("cross-engine burst re-queries all states once", #sentCommands == 3)
+check("cross-engine burst all re-query", sentCommands[3] == "BOT\tall ?")
 
--- A re-arm during the quiet period cancels the stale timer: the requery reflects
--- only the engines of the newest burst.
+-- A re-arm during the quiet period cancels the stale flush timer: the flush
+-- reflects only the newest burst.
 sentCommands = {}
 this = foodCheckbox
 foodCheckbox.script()
-for _ = 1, 5 do waitFrame.script() end -- 0.5s into the debounce window
+for _ = 1, 2 do waitFrame.script() end -- 0.2s, still inside the 0.3s flush window
 this = potionsCheckbox
 potionsCheckbox.script()
-check("re-arm sends only the new toggle", #sentCommands == 2)
+check("re-arm buffers only the new toggle", #sentCommands == 0)
+for _ = 1, 4 do waitFrame.script() end
+check("re-arm flushes the full burst once", #sentCommands == 2)
+check("re-arm stale flush timer no-op", sentCommands[1] == "BOT\tnc -food")
 for _ = 1, 12 do waitFrame.script() end
-check("re-arm re-queries the full burst once", #sentCommands == 4)
-check("re-arm stale timer no-op", sentCommands[3] == "BOT\tnc ?")
+check("re-arm re-queries all states once", #sentCommands == 3)
+check("re-arm stale requery no-op", sentCommands[3] == "BOT\tall ?")
 this = nil
 SendChatMessage = realSendChatMessage
 

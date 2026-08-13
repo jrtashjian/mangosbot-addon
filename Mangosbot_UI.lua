@@ -611,14 +611,15 @@ local function SendToCurrentBot(cmd)
 	SendBotCommand(cmd, "WHISPER", nil, CurrentBot)
 end
 
--- Debounced follow-up query after a strategy toggle burst: each toggle re-arms
--- the timer, and when a 0.6s quiet period passes the engines touched during the
--- burst are re-queried once. A bare toggle carries no list, and the query avoids
--- both the panel-open query burst race (a stale list reply would otherwise
--- overwrite the new state and revert the checkbox) and the situation-strategy
--- lag ("boost shadow pve" is dropped one AI tick after the generic "boost" it
--- depends on).
-local ToggleDebounce = nil -- { token, bot, engines }
+-- Buffers strategy toggles per engine during a click burst and flushes them as
+-- one combined command per engine after a short quiet period (the server splits
+-- engine strategy lists on commas, so "nc +food,-loot" toggles both in a single
+-- message). A single "all ?" re-query runs after the AI settles: it lists every
+-- state at once (combat, non combat, dead, react), refreshing the whole panel,
+-- and lands after any stale panel-open replies so the new state wins. The delay
+-- also absorbs the situation-strategy lag ("boost shadow pve" is dropped one AI
+-- tick after the generic "boost" it depends on).
+local ToggleDebounce = nil -- { token, bot, order = {}, toggles = {} }
 
 local function SendStrategyToggle(name, on, engines)
 	local target = CurrentBot
@@ -632,39 +633,41 @@ local function SendStrategyToggle(name, on, engines)
 	if not on then
 		prefix = "-"
 	end
-	for i = 1, table.getn(engines) do
-		SendBotCommand(engines[i] .. " " .. prefix .. name, "WHISPER", nil, target)
-	end
 	if ToggleDebounce == nil then
-		ToggleDebounce = { token = 0, bot = nil, engines = {} }
+		ToggleDebounce = { token = 0, bot = nil, order = {}, toggles = {} }
 	end
-	ToggleDebounce.token = ToggleDebounce.token + 1
-	ToggleDebounce.bot = target
 	for i = 1, table.getn(engines) do
 		local e = engines[i]
-		local dup = false
-		for j = 1, table.getn(ToggleDebounce.engines) do
-			if ToggleDebounce.engines[j] == e then
-				dup = true
-				break
-			end
+		if ToggleDebounce.toggles[e] == nil then
+			ToggleDebounce.toggles[e] = {}
+			table.insert(ToggleDebounce.order, e)
 		end
-		if not dup then
-			table.insert(ToggleDebounce.engines, e)
-		end
+		table.insert(ToggleDebounce.toggles[e], prefix .. name)
 	end
+	ToggleDebounce.bot = target
+	ToggleDebounce.token = ToggleDebounce.token + 1
 	local token = ToggleDebounce.token
-	wait(0.6, function()
+
+	wait(0.3, function()
 		if ToggleDebounce.token ~= token then
 			return
 		end
 		local bot = ToggleDebounce.bot
-		local q = ToggleDebounce.engines
-		ToggleDebounce.engines = {}
-		ToggleDebounce.token = ToggleDebounce.token + 1
-		for i = 1, table.getn(q) do
-			SendBotCommand(q[i] .. " ?", "WHISPER", nil, bot)
+		for i = 1, table.getn(ToggleDebounce.order) do
+			local e = ToggleDebounce.order[i]
+			local list = ToggleDebounce.toggles[e]
+			if table.getn(list) > 0 then
+				SendBotCommand(e .. " " .. table.concat(list, ","), "WHISPER", nil, bot)
+			end
 		end
+		wait(0.6, function()
+			if ToggleDebounce.token ~= token then
+				return
+			end
+			ToggleDebounce.toggles = {}
+			ToggleDebounce.order = {}
+			SendBotCommand("all ?", "WHISPER", nil, bot)
+		end)
 	end)
 end
 

@@ -79,9 +79,7 @@ function QueryBotParty()
 		SendBotCommand(
 			EnsureAddonPrefix("formation ?")
 				.. CommandSeparator
-				.. EnsureAddonPrefix("co ?")
-				.. CommandSeparator
-				.. EnsureAddonPrefix("nc ?")
+				.. EnsureAddonPrefix("all ?")
 				.. CommandSeparator
 				.. EnsureAddonPrefix("save mana ?"),
 			"PARTY"
@@ -98,11 +96,7 @@ function QuerySelectedBot(name)
 				.. CommandSeparator
 				.. EnsureAddonPrefix("ll ?")
 				.. CommandSeparator
-				.. EnsureAddonPrefix("co ?")
-				.. CommandSeparator
-				.. EnsureAddonPrefix("nc ?")
-				.. CommandSeparator
-				.. EnsureAddonPrefix("react ?")
+				.. EnsureAddonPrefix("all ?")
 				.. CommandSeparator
 				.. EnsureAddonPrefix("save mana ?")
 				.. CommandSeparator
