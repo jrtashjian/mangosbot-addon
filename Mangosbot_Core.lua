@@ -4,7 +4,6 @@ local VERSION = 0
 local CLIENT = {
 	expansion = "classic",
 	interface = 11000,
-	hasAddonWhisper = false,
 	invite = nil,
 }
 
@@ -40,9 +39,6 @@ local function detectClient()
 		CLIENT.expansion = "classic"
 		VERSION = 0
 	end
-
-	-- SendAddonMessage WHISPER exists from TBC onward
-	CLIENT.hasAddonWhisper = (interface >= 20000)
 
 	if InviteUnit then
 		CLIENT.invite = InviteUnit

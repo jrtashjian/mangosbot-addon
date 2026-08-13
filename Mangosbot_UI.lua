@@ -451,13 +451,6 @@ function UpdateBotDebugPanel(message, sender)
 
 end
 
--- CreateSelectedBotPanel stub: old dense toolbar panel removed.
-function CreateSelectedBotPanel()
-	local frame = CreateFrame("Frame", "SelectedBotPanel", UIParent)
-	frame:Hide()
-	return frame
-end
-
 -- Bot panel: Blizzard-style UIPanel opened when a bot is targeted.
 
 local BP_WIDTH = 384

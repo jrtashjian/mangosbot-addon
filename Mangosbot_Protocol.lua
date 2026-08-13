@@ -330,6 +330,33 @@ function ParseStatsReply(message)
 	}
 end
 
+-- First matching prefix wins. Longer labels must precede "Strategies:".
+local STRATEGY_PREFIXES = {
+	{ prefix = "Combat Strategies:", type = "co" },
+	{ prefix = "Non Combat Strategies:", type = "nc" },
+	{ prefix = "Reaction Strategies:", type = "react" },
+	{ prefix = "Dead Strategies:", type = "dead" },
+	{ prefix = "co Strategies:", type = "co" },
+	{ prefix = "nc Strategies:", type = "nc" },
+	{ prefix = "react Strategies:", type = "react" },
+	{ prefix = "dead Strategies:", type = "dead" },
+	{ prefix = "Strategies:", type = "co", ncIfBodyHasNc = true },
+}
+
+-- Longer prefixes first so "rti cc set to" wins over "rti:".
+local FIELD_PREFIXES = {
+	{ prefix = "Formation:", field = "formation", lower = true },
+	{ prefix = "Stance:", field = "stance", lower = true },
+	{ prefix = "Mana save level set:", field = "savemana" },
+	{ prefix = "Mana save level:", field = "savemana" },
+	{ prefix = "Loot strategy set to", field = "loot" },
+	{ prefix = "Loot strategy:", field = "loot" },
+	{ prefix = "rti cc set to", field = "rti_cc" },
+	{ prefix = "rti set to", field = "rti" },
+	{ prefix = "rti cc:", field = "rti_cc" },
+	{ prefix = "rti:", field = "rti" },
+}
+
 function OnWhisper(message, sender)
 	if message == nil or sender == nil then
 		return false
@@ -348,59 +375,15 @@ function OnWhisper(message, sender)
 	local dirty = false
 
 	local strategyType, body
-	body = AfterPrefix(message, "Combat Strategies:")
-	if body ~= nil then
-		strategyType = "co"
-	end
-	if body == nil then
-		body = AfterPrefix(message, "Non Combat Strategies:")
+	for si = 1, table.getn(STRATEGY_PREFIXES) do
+		local spec = STRATEGY_PREFIXES[si]
+		body = AfterPrefix(message, spec.prefix)
 		if body ~= nil then
-			strategyType = "nc"
-		end
-	end
-	if body == nil then
-		body = AfterPrefix(message, "Reaction Strategies:")
-		if body ~= nil then
-			strategyType = "react"
-		end
-	end
-	if body == nil then
-		body = AfterPrefix(message, "Dead Strategies:")
-		if body ~= nil then
-			strategyType = "dead"
-		end
-	end
-	if body == nil then
-		body = AfterPrefix(message, "co Strategies:")
-		if body ~= nil then
-			strategyType = "co"
-		end
-	end
-	if body == nil then
-		body = AfterPrefix(message, "nc Strategies:")
-		if body ~= nil then
-			strategyType = "nc"
-		end
-	end
-	if body == nil then
-		body = AfterPrefix(message, "react Strategies:")
-		if body ~= nil then
-			strategyType = "react"
-		end
-	end
-	if body == nil then
-		body = AfterPrefix(message, "dead Strategies:")
-		if body ~= nil then
-			strategyType = "dead"
-		end
-	end
-	if body == nil then
-		body = AfterPrefix(message, "Strategies:")
-		if body ~= nil then
-			strategyType = "co"
-			if string.find(body, "nc") ~= nil then
+			strategyType = spec.type
+			if spec.ncIfBodyHasNc and string.find(body, "nc") ~= nil then
 				strategyType = "nc"
 			end
+			break
 		end
 	end
 	if strategyType ~= nil and body ~= nil then
@@ -408,64 +391,17 @@ function OnWhisper(message, sender)
 		dirty = true
 	end
 
-	body = AfterPrefix(message, "Formation:")
-	if body ~= nil then
-		bot["formation"] = string.lower(body)
-		dirty = true
-	end
-
-	body = AfterPrefix(message, "Stance:")
-	if body ~= nil then
-		bot["stance"] = string.lower(body)
-		dirty = true
-	end
-
-	body = AfterPrefix(message, "Mana save level set:")
-	if body ~= nil then
-		bot["savemana"] = body
-		dirty = true
-	end
-
-	body = AfterPrefix(message, "Mana save level:")
-	if body ~= nil then
-		bot["savemana"] = body
-		dirty = true
-	end
-
-	body = AfterPrefix(message, "Loot strategy set to")
-	if body ~= nil then
-		bot["loot"] = body
-		dirty = true
-	end
-
-	body = AfterPrefix(message, "Loot strategy:")
-	if body ~= nil then
-		bot["loot"] = body
-		dirty = true
-	end
-
-	body = AfterPrefix(message, "rti cc set to")
-	if body ~= nil then
-		bot["rti_cc"] = body
-		dirty = true
-	end
-
-	body = AfterPrefix(message, "rti set to")
-	if body ~= nil then
-		bot["rti"] = body
-		dirty = true
-	end
-
-	body = AfterPrefix(message, "rti cc:")
-	if body ~= nil then
-		bot["rti_cc"] = body
-		dirty = true
-	end
-
-	body = AfterPrefix(message, "rti:")
-	if body ~= nil then
-		bot["rti"] = body
-		dirty = true
+	for fi = 1, table.getn(FIELD_PREFIXES) do
+		local spec = FIELD_PREFIXES[fi]
+		local value = AfterPrefix(message, spec.prefix)
+		if value ~= nil then
+			if spec.lower then
+				value = string.lower(value)
+			end
+			bot[spec.field] = value
+			dirty = true
+			break
+		end
 	end
 
 	local stats = ParseStatsReply(message)

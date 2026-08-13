@@ -263,7 +263,6 @@ check("BotRoster created at load", BotRoster ~= nil)
 check("BotDebugPanel created at load", BotDebugPanel ~= nil)
 
 check("client detects wotlk", GetMangosbotVersion() == 2)
-check("client has addon whisper", GetMangosbotClient().hasAddonWhisper == true)
 check("MB_HasDeathKnight on wotlk", MB_HasDeathKnight() == true)
 
 check("fmod basic", fmod(7, 3) == 1)
@@ -484,6 +483,15 @@ check("BotButtonIsActive stance", BotButtonIsActive(matchBot, { stance = "behind
 check("BotButtonIsActive rti", BotButtonIsActive(matchBot, { rti = "skull" }) == true)
 check("BotButtonIsActive inactive", BotButtonIsActive(matchBot, { strategy = "bear" }) == false)
 check("BotIsInParty false when empty", BotIsInParty("Nobody") == false)
+
+local rtiHost = CreateFrame("Frame", "TestRtiHost")
+local rtiBtns = CreateRtiToolBar(rtiHost, 0, "test_rti", false, 0, 0, false)
+check("generated rti skull command", rtiBtns["rti_skull"].command[0] == "rti skull")
+check("generated rti skull field", rtiBtns["rti_skull"].rti == "skull")
+check("generated rti moon last index", rtiBtns["rti_moon"].index == 7)
+local rtiCcBtns = CreateRtiCcToolBar(rtiHost, 0, "test_rti_cc", false, 0, 0, false)
+check("generated rti cc moon command", rtiCcBtns["rti_moon"].command[0] == "rti cc moon")
+check("generated rti cc moon field", rtiCcBtns["rti_moon"].rti_cc == "moon")
 
 -- Classic client detection
 GetBuildInfo = function() return "1.12.1", "5875", "Sep 19 2006", 11000 end

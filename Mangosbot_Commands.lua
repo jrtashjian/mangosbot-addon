@@ -81,142 +81,52 @@ function CreateToolBar(frame, y, name, buttons, x, spacing, register)
 	return buttons
 end
 
+local RAID_ICONS = {
+	"skull",
+	"cross",
+	"circle",
+	"star",
+	"square",
+	"triangle",
+	"diamond",
+	"moon",
+}
+
+local function CreateRaidIconToolBar(frame, y, name, group, x, spacing, register, spec)
+	local buttons = {}
+	for i = 1, table.getn(RAID_ICONS) do
+		local icon = RAID_ICONS[i]
+		local btn = {
+			icon = spec.iconPrefix .. icon,
+			command = { [0] = spec.commandPrefix .. icon },
+			tooltip = spec.tooltipPrefix .. icon .. spec.tooltipSuffix,
+			index = i - 1,
+			group = group,
+		}
+		btn[spec.field] = icon
+		buttons["rti_" .. icon] = btn
+	end
+	return CreateToolBar(frame, -y, name, buttons, x, spacing, register)
+end
+
 function CreateRtiToolBar(frame, y, name, group, x, spacing, register)
-	return CreateToolBar(frame, -y, name, {
-		["rti_skull"] = {
-			icon = "rti_skull",
-			command = { [0] = "rti skull" },
-			rti = "skull",
-			tooltip = "Attack the skull-marked target",
-			index = 0,
-			group = group,
-		},
-		["rti_cross"] = {
-			icon = "rti_cross",
-			command = { [0] = "rti cross" },
-			rti = "cross",
-			tooltip = "Attack the cross-marked target",
-			index = 1,
-			group = group,
-		},
-		["rti_circle"] = {
-			icon = "rti_circle",
-			command = { [0] = "rti circle" },
-			rti = "circle",
-			tooltip = "Attack the circle-marked target",
-			index = 2,
-			group = group,
-		},
-		["rti_star"] = {
-			icon = "rti_star",
-			command = { [0] = "rti star" },
-			rti = "star",
-			tooltip = "Attack the star-marked target",
-			index = 3,
-			group = group,
-		},
-		["rti_square"] = {
-			icon = "rti_square",
-			command = { [0] = "rti square" },
-			rti = "square",
-			tooltip = "Attack the square-marked target",
-			index = 4,
-			group = group,
-		},
-		["rti_triangle"] = {
-			icon = "rti_triangle",
-			command = { [0] = "rti triangle" },
-			rti = "triangle",
-			tooltip = "Attack the triangle-marked target",
-			index = 5,
-			group = group,
-		},
-		["rti_diamond"] = {
-			icon = "rti_diamond",
-			command = { [0] = "rti diamond" },
-			rti = "diamond",
-			tooltip = "Attack the diamond-marked target",
-			index = 6,
-			group = group,
-		},
-		["rti_moon"] = {
-			icon = "rti_moon",
-			command = { [0] = "rti moon" },
-			rti = "moon",
-			tooltip = "Attack the moon-marked target",
-			index = 7,
-			group = group,
-		},
-	}, x, spacing, register)
+	return CreateRaidIconToolBar(frame, y, name, group, x, spacing, register, {
+		iconPrefix = "rti_",
+		commandPrefix = "rti ",
+		field = "rti",
+		tooltipPrefix = "Attack the ",
+		tooltipSuffix = "-marked target",
+	})
 end
 
 function CreateRtiCcToolBar(frame, y, name, group, x, spacing, register)
-	return CreateToolBar(frame, -y, name, {
-		["rti_skull"] = {
-			icon = "cc_skull",
-			command = { [0] = "rti cc skull" },
-			rti_cc = "skull",
-			tooltip = "Crowd control the skull-marked target",
-			index = 0,
-			group = group,
-		},
-		["rti_cross"] = {
-			icon = "cc_cross",
-			command = { [0] = "rti cc cross" },
-			rti_cc = "cross",
-			tooltip = "Crowd control the cross-marked target",
-			index = 1,
-			group = group,
-		},
-		["rti_circle"] = {
-			icon = "cc_circle",
-			command = { [0] = "rti cc circle" },
-			rti_cc = "circle",
-			tooltip = "Crowd control the circle-marked target",
-			index = 2,
-			group = group,
-		},
-		["rti_star"] = {
-			icon = "cc_star",
-			command = { [0] = "rti cc star" },
-			rti_cc = "star",
-			tooltip = "Crowd control the star-marked target",
-			index = 3,
-			group = group,
-		},
-		["rti_square"] = {
-			icon = "cc_square",
-			command = { [0] = "rti cc square" },
-			rti_cc = "square",
-			tooltip = "Crowd control the square-marked target",
-			index = 4,
-			group = group,
-		},
-		["rti_triangle"] = {
-			icon = "cc_triangle",
-			command = { [0] = "rti cc triangle" },
-			rti_cc = "triangle",
-			tooltip = "Crowd control the triangle-marked target",
-			index = 5,
-			group = group,
-		},
-		["rti_diamond"] = {
-			icon = "cc_diamond",
-			command = { [0] = "rti cc diamond" },
-			rti_cc = "diamond",
-			tooltip = "Crowd control the diamond-marked target",
-			index = 6,
-			group = group,
-		},
-		["rti_moon"] = {
-			icon = "cc_moon",
-			command = { [0] = "rti cc moon" },
-			rti_cc = "moon",
-			tooltip = "Crowd control the moon-marked target",
-			index = 7,
-			group = group,
-		},
-	}, x, spacing, register)
+	return CreateRaidIconToolBar(frame, y, name, group, x, spacing, register, {
+		iconPrefix = "cc_",
+		commandPrefix = "rti cc ",
+		field = "rti_cc",
+		tooltipPrefix = "Crowd control the ",
+		tooltipSuffix = "-marked target",
+	})
 end
 
 function CreateMovementToolBar(frame, y, name, group, x, spacing, register)
