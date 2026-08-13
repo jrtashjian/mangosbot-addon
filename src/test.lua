@@ -598,6 +598,45 @@ GetBuildInfo = function() return "1.12.1", "5875", "Sep 19 2006", 11000 end
 -- re-load core detection is once at load; just unit-test helpers still ok
 check("fmod still works after", fmod(5, 2) == 1)
 
+-- CanonicalSet compares reordered/duplicated server strategy echoes.
+check("CanonicalSet dedupes and sorts",
+    CanonicalSet("equip,vendor,disenchant,quest,skill,use,vendor") == "disenchant,equip,quest,skill,use,vendor")
+check("CanonicalSet single token", CanonicalSet("  gray ") == "gray")
+check("CanonicalSet nil", CanonicalSet(nil) == nil)
+
+-- Loot dropdown round-trips the server's expanded echo back to an option.
+check("loot label matches expanded all",
+    BotLootLabel("equip,vendor,disenchant,quest,skill,use,vendor,trash") == "Everything")
+check("loot label matches default strategy",
+    BotLootLabel("equip,quest,skill,disenchant,use,vendor") == "Gray items")
+check("loot label matches keyword", BotLootLabel("gray") == "Gray items")
+check("loot label matches trade skills",
+    BotLootLabel("equip,vendor,quest,skill,use") == "Trade skills")
+
+-- SendStrategyToggle sends a bare toggle, then re-queries the engine after the
+-- AI settles (no ",?" on the toggle: the delayed query wins over any stale
+-- panel-open reply and reflects post-settle strategy state).
+for _ = 1, 12 do waitFrame.script() end -- drain any leftover wait records
+local sentCommands = {}
+local realSendChatMessage = SendChatMessage
+SendChatMessage = function(text, _chat, _lang, _channel)
+	table.insert(sentCommands, text)
+end
+CurrentBot = "ToggleBot"
+botTable["ToggleBot"] = { strategy = { nc = {}, co = {}, react = {}, dead = {} } }
+local foodCheckbox = MangosbotBotFrame.checkboxes["food"]
+this = foodCheckbox
+foodCheckbox.script()
+check("toggle sends bare engine command", sentCommands[1] == "BOT\tnc -food")
+check("toggle sends no query on the toggle", #sentCommands == 1)
+-- 12 ticks = 1.2s > the 0.6s re-query delay; generous to absorb the harness's
+-- exact-0.1s float drift (0.6-0.1*5 == 0.10000000000000003 > 0.1).
+for _ = 1, 12 do waitFrame.script() end
+check("toggle re-queries engine after settle", sentCommands[2] == "BOT\tnc ?")
+check("toggle re-query only its engine", #sentCommands == 2)
+this = nil
+SendChatMessage = realSendChatMessage
+
 if failures == 0 then
     print("ALL TESTS PASSED")
     os.exit(0)

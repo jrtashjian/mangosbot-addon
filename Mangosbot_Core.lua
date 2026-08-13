@@ -309,6 +309,27 @@ function splitString2(self, inSplitPattern, outResults)
 	return outResults
 end
 
+-- Canonical comma-list: trim entries, drop duplicates, sort. Server replies echo
+-- strategy sets reordered/duplicated (e.g. loot strategy); this makes them
+-- comparable to the UI option sets.
+function CanonicalSet(s)
+	if s == nil then
+		return nil
+	end
+	local parts = splitString2(s, ",")
+	local seen = {}
+	local out = {}
+	for i = 1, table.getn(parts) do
+		local p = trim2(parts[i])
+		if p ~= "" and seen[p] == nil then
+			seen[p] = true
+			table.insert(out, p)
+		end
+	end
+	table.sort(out)
+	return table.concat(out, ",")
+end
+
 function StartsWith(s, prefix)
 	if s == nil or prefix == nil then
 		return false

@@ -481,11 +481,14 @@ local STANCE_OPTS = {
 	{ value = "turnback", label = "Turn back" },
 	{ value = "behind", label = "Behind" },
 }
+-- `set` is the canonical (sorted, deduped) expansion the server echoes for each
+-- keyword (LootStrategyValue::Set backwards-compat mapping). "gray" and
+-- "disenchant" expand to the same set server-side.
 local LOOT_OPTS = {
-	{ value = "normal", label = "Trade skills" },
-	{ value = "gray", label = "Gray items" },
-	{ value = "disenchant", label = "Disenchant" },
-	{ value = "all", label = "Everything" },
+	{ value = "normal", label = "Trade skills", set = "equip,quest,skill,use,vendor" },
+	{ value = "gray", label = "Gray items", set = "disenchant,equip,quest,skill,use,vendor" },
+	{ value = "disenchant", label = "Disenchant", set = "disenchant,equip,quest,skill,use,vendor" },
+	{ value = "all", label = "Everything", set = "disenchant,equip,quest,skill,trash,use,vendor" },
 }
 local SAVEMANA_OPTS = {
 	{ value = "1", label = "1 - Always cast" },
@@ -609,16 +612,30 @@ local function SendToCurrentBot(cmd)
 end
 
 local function SendStrategyToggle(name, on, engines)
-	local prefix = "+"
-	if not on then
-		prefix = "-"
+	local target = CurrentBot
+	if target == nil then
+		return
 	end
 	if engines == nil then
 		engines = { "co", "nc" }
 	end
-	for i = 1, table.getn(engines) do
-		SendToCurrentBot(engines[i] .. " " .. prefix .. name .. ",?")
+	local prefix = "+"
+	if not on then
+		prefix = "-"
 	end
+	for i = 1, table.getn(engines) do
+		SendBotCommand(engines[i] .. " " .. prefix .. name, "WHISPER", nil, target)
+	end
+	-- Re-read after the AI settles. A bare toggle carries no list, and the
+	-- follow-up query avoids both the panel-open query burst race (a stale list
+	-- reply would otherwise overwrite the new state and revert the checkbox) and
+	-- the situation-strategy lag ("boost shadow pve" is dropped one AI tick after
+	-- the generic "boost" it depends on).
+	wait(0.6, function()
+		for i = 1, table.getn(engines) do
+			SendBotCommand(engines[i] .. " ?", "WHISPER", nil, target)
+		end
+	end)
 end
 
 function QueryBotPanelState(name)
@@ -777,7 +794,22 @@ local function OptionLabel(opts, value)
 			return opts[i].label
 		end
 	end
+	-- Server echoes loot strategy reordered/deduped; match option `set` by
+	-- canonical form so the dropdown reflects the actual server value.
+	for i = 1, table.getn(opts) do
+		if opts[i].set ~= nil then
+			local v = CanonicalSet(value)
+			if v ~= nil and CanonicalSet(opts[i].set) == v then
+				return opts[i].label
+			end
+		end
+	end
 	return BpCapitalize(value)
+end
+
+-- Dropdown label for a loot strategy value (server echo or keyword).
+function BotLootLabel(value)
+	return OptionLabel(LOOT_OPTS, value)
 end
 
 local function CreateSectionHeader(parent, text)
