@@ -8,6 +8,8 @@ Mangosbot_EventFrame:RegisterEvent("CHAT_MSG_PARTY_LEADER")
 Mangosbot_EventFrame:RegisterEvent("CHAT_MSG_RAID")
 Mangosbot_EventFrame:RegisterEvent("CHAT_MSG_RAID_LEADER")
 Mangosbot_EventFrame:RegisterEvent("CHAT_MSG_SYSTEM")
+Mangosbot_EventFrame:RegisterEvent("ADDON_LOADED")
+Mangosbot_EventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 Mangosbot_EventFrame:RegisterEvent("UPDATE")
 Mangosbot_EventFrame:Hide()
 
@@ -247,15 +249,14 @@ function OnKeyBindingDown(button)
 end
 
 local function OnTargetChanged()
-	if ShouldHideBotControls() then
-		SelectedBotPanel:Hide()
-		return
-	end
 	local name = GetUnitName("target")
-	if CurrentBot ~= name then
-		CurrentBot = nil
+	if IsBotPanelTarget and IsBotPanelTarget() then
+		if ShowBotPanelFor then
+			ShowBotPanelFor(name)
+		end
+	elseif HideBotPanel then
+		HideBotPanel()
 	end
-	QuerySelectedBot(name)
 end
 
 local function OnSystemChat(message)
@@ -288,17 +289,28 @@ local function OnBotChat(event, message, sender)
 		UpdateBotDebugPanel(message, sender)
 	end
 
-	if BotRoster:IsVisible() or SelectedBotPanel:IsVisible() then
+	if BotRoster:IsVisible() or (MangosbotBotFrame and MangosbotBotFrame:IsVisible()) then
 		HandleBotStatusMessage(message, sender)
 		UpdateGroupToolBar()
 	end
 
-	RefreshSelectedBotPanel(sender)
+	if RefreshBotPanel and MangosbotBotFrame and MangosbotBotFrame:IsVisible() then
+		RefreshBotPanel()
+	end
 end
 
 Mangosbot_EventFrame:SetScript("OnEvent", function()
 	if event == "PLAYER_TARGET_CHANGED" then
 		OnTargetChanged()
+		return
+	end
+
+	if event == "ADDON_LOADED" then
+		-- No inspect hooks; keep hook point for future load-on-demand if needed.
+		return
+	end
+
+	if event == "PLAYER_ENTERING_WORLD" then
 		return
 	end
 

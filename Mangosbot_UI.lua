@@ -454,858 +454,1103 @@ function UpdateBotDebugPanel(message, sender)
 
 end
 
+-- CreateSelectedBotPanel stub: old dense toolbar panel removed.
 function CreateSelectedBotPanel()
 	local frame = CreateFrame("Frame", "SelectedBotPanel", UIParent)
 	frame:Hide()
-	frame:SetWidth(170)
-	frame:SetHeight(155)
-	frame:SetPoint("CENTER", UIParent, "CENTER")
-	frame:EnableMouse(true)
-	frame:SetMovable(true)
-	frame:SetFrameStrata("DIALOG")
-	frame:SetBackdropColor(0, 0, 0, 1.0)
-	frame:SetBackdrop({
-		bgFile = "Interface/DialogFrame/UI-DialogBox-Background",
-		edgeFile = "Interface/ChatFrame/ChatFrameBackground",
-		tile = true,
-		tileSize = 16,
-		edgeSize = 2,
-		insets = { left = 0, right = 0, top = 0, bottom = 0 },
-	})
-	frame:SetBackdropBorderColor(0.5, 0.1, 0.7, 1)
-	frame:RegisterForDrag("LeftButton")
-
-	frame.header = CreateFrame("Frame", "SelectedBotPanelHeader", frame)
-	frame.header:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, 0)
-	frame.header:SetWidth(frame:GetWidth())
-	frame.header:SetHeight(22)
-	frame.header:SetBackdropColor(0.5, 0.1, 0.7, 1)
-	frame.header:SetBackdrop({
-		bgFile = "Interface/DialogFrame/UI-DialogBox-Background",
-		edgeFile = "Interface/ChatFrame/ChatFrameBackground",
-		tile = true,
-		tileSize = 16,
-		edgeSize = 0,
-		insets = { left = 2, right = 2, top = 2, bottom = 0 },
-	})
-	frame.header:SetBackdropBorderColor(0.5, 0.1, 0.7, 1)
-
-	frame.header.text = frame.header:CreateFontString("SelectedBotPanelHeaderText")
-	frame.header.text:SetPoint("TOPLEFT", frame, "TOPLEFT", 22, 0)
-	frame.header.text:SetWidth(frame.header:GetWidth())
-	frame.header.text:SetHeight(22)
-	frame.header.text:SetFont("Fonts/FRIZQT__.TTF", 11, "OUTLINE")
-	frame.header.text:SetJustifyH("LEFT")
-	frame.header.text:SetText("Click!")
-
-	frame.header.role = CreateFrame("Frame", "SelectedBotPanelHeaderRole", frame.header)
-	frame.header.role:SetPoint("TOPLEFT", frame, "TOPLEFT", 3, -3)
-	frame.header.role:SetWidth(16)
-	frame.header.role:SetHeight(16)
-	frame.header.role.texture = frame.header.role:CreateTexture(nil, "BACKGROUND")
-	frame.header.role.texture:SetTexture("Interface/Addons/Mangosbot/Images/role_dps.tga")
-	frame.header.role.texture:SetAllPoints()
-
-	EnablePositionSaving(frame, "SelectedBotPanel")
-
-	local y = 25
-	CreateMovementToolBar(frame, y, "movement", false, 5, 5, true)
-
-	y = y + 25
-	CreateToolBar(frame, -y, "actions", {
-		["stats"] = {
-			icon = "stats",
-			command = { [0] = "stats" },
-			strategy = "",
-			tooltip = "Tell stats (XP, money, etc.)",
-			index = 0,
-		},
-		["whisper"] = {
-			icon = "whisper",
-			command = { [0] = "" },
-			tooltip = "Start whisper chat",
-			strategy = "",
-			handler = StartChat,
-			index = 1,
-		},
-		["loot"] = {
-			icon = "loot",
-			command = { [0] = "d add all loot", [1] = "d loot" },
-			strategy = "",
-			tooltip = "Loot everything",
-			index = 2,
-		},
-		["release"] = {
-			icon = "release",
-			command = { [0] = "release" },
-			strategy = "",
-			tooltip = "Release spirit",
-			index = 3,
-		},
-		["revive"] = {
-			icon = "revive",
-			command = { [0] = "revive", [1] = "d revive from corpse" },
-			strategy = "",
-			tooltip = "Revive from corpse",
-			index = 4,
-		},
-		["sell"] = {
-			icon = "sell",
-			command = { [0] = "s *" },
-			strategy = "",
-			tooltip = "Sell vendor trash",
-			index = 5,
-		},
-		["talk"] = {
-			icon = "talk",
-			command = { [0] = "accept *" },
-			strategy = "",
-			tooltip = "Accept all quests",
-			index = 6,
-		},
-		["menu"] = {
-			icon = "menu",
-			command = { [0] = "" },
-			strategy = "",
-			tooltip = "More...",
-			handler = OpenDropDownMenuForCurrentBot,
-			index = 7,
-		},
-	})
-
-	y = y + 25
-	CreateToolBar(frame, -y, "inventory", {
-		["los"] = {
-			icon = "los",
-			command = { [0] = "los gos" },
-			strategy = "",
-			tooltip = "Show nearby game objects",
-			index = 0,
-		},
-		["count"] = {
-			icon = "count",
-			command = { [0] = "c" },
-			strategy = "",
-			tooltip = "Show inventory",
-			index = 1,
-		},
-		["bank"] = {
-			icon = "bank",
-			command = { [0] = "bank" },
-			strategy = "",
-			tooltip = "Show bank",
-			index = 2,
-		},
-		["spells"] = {
-			icon = "spells",
-			command = { [0] = "spells +" },
-			strategy = "",
-			tooltip = "Show crafting",
-			index = 3,
-		},
-		["equip"] = {
-			icon = "equip",
-			command = { [0] = "e ?" },
-			strategy = "",
-			tooltip = "Show equipment",
-			index = 4,
-		},
-		["mail"] = {
-			icon = "mail",
-			command = { [0] = "mail ?" },
-			strategy = "",
-			tooltip = "Show mail",
-			index = 5,
-		},
-	})
-
-	y = y + 25
-	CreateFormationToolBar(frame, y, "formation", false, 5, 5, true)
-
-	y = y + 25
-	CreateStanceToolBar(frame, y, "stance", false, 5, 5, true)
-
-	y = y + 25
-	CreateSaveManaToolBar(frame, y, "savemana", false, 5, 5, true)
-
-	y = y + 25
-	CreateToolBar(frame, -y, "loot", {
-		["ll_normal"] = {
-			icon = "ll_normal",
-			command = { [0] = "ll normal" },
-			loot = "normal",
-			tooltip = "Loot tradeskill items only",
-			index = 0,
-		},
-		["ll_gray"] = {
-			icon = "ll_gray",
-			command = { [0] = "ll gray" },
-			loot = "gray",
-			tooltip = "Loot gray items",
-			index = 1,
-		},
-		["ll_disenchant"] = {
-			icon = "ll_disenchant",
-			command = { [0] = "ll disenchant" },
-			loot = "disenchant",
-			tooltip = "Loot BoE items for disenchanting",
-			index = 2,
-		},
-		["ll_all"] = {
-			icon = "ll_all",
-			command = { [0] = "ll all" },
-			loot = "all",
-			tooltip = "Loot everything",
-			index = 3,
-		},
-		["reveal"] = {
-			icon = "stats",
-			command = { [0] = "nc ~reveal,?" },
-			strategy = "reveal",
-			tooltip = "Reveal gathering nodes",
-			index = 4,
-		},
-	})
-
-	y = y + 25
-	CreateToolBar(frame, -y, "attack_type", {
-		["tank_aoe"] = {
-			icon = "tank_aoe",
-			command = { [0] = "nc +tank aoe,?", [1] = "co +tank aoe,?" },
-			strategy = "tank aoe",
-			tooltip = "Grab all aggro",
-			index = 0,
-		},
-		["dps_assist"] = {
-			icon = "dps_assist",
-			command = { [0] = "nc +dps assist,?", [1] = "co +dps assist,?" },
-			strategy = "dps assist",
-			tooltip = "Assist others",
-			index = 1,
-		},
-		["defense"] = {
-			icon = "tank_assist",
-			command = { [0] = "nc +defense,?", [1] = "co +defense,?" },
-			strategy = "defense",
-			tooltip = "Defensive",
-			index = 2,
-		},
-		["grind"] = {
-			icon = "grind",
-			command = { [0] = "nc +grind,?" },
-			strategy = "grind",
-			tooltip = "Aggressive mode (grinding)",
-			index = 3,
-		},
-		["close"] = {
-			icon = "close",
-			command = { [0] = "co ~close,?" },
-			strategy = "close",
-			tooltip = "Melee combat",
-			index = 4,
-		},
-		["ranged"] = {
-			icon = "ranged",
-			command = { [0] = "co ~ranged,?" },
-			strategy = "ranged",
-			tooltip = "Ranged combat",
-			index = 5,
-		},
-		["threat"] = {
-			icon = "threat",
-			command = { [0] = "co ~threat,?" },
-			strategy = "threat",
-			tooltip = "Keep threat level low",
-			index = 6,
-		},
-	})
-
-	y = y + 25
-	CreateRtiToolBar(frame, y, "rti", false, 5, 5, true)
-
-	y = y + 25
-	CreateRtiCcToolBar(frame, y, "rti cc", false, 5, 5, true)
-
-	y = y + 25
-	CreateGenericNonCombatToolBar(frame, y, "generic", false, 5, 5, true)
-
-	y = y + 25
-	CreateGenericCombatToolBar(frame, y, "generic_combat", false, 5, 5, true)
-
-	y = y + 25
-	CreateToolBar(frame, -y, "CLASS_DRUID", {
-		["bear"] = {
-			icon = "bear",
-			command = { [0] = "co +bear,?" },
-			strategy = "bear",
-			tooltip = "Use bear form",
-			index = 0,
-		},
-		["cat"] = {
-			icon = "cat",
-			command = { [0] = "co +cat,?" },
-			strategy = "cat",
-			tooltip = "Use cat form",
-			index = 1,
-		},
-		["caster"] = {
-			icon = "caster",
-			command = { [0] = "co +caster,?" },
-			strategy = "caster",
-			tooltip = "Use caster form",
-			index = 2,
-		},
-		["heal"] = {
-			icon = "heal",
-			command = { [0] = "co +heal,?" },
-			strategy = "heal",
-			tooltip = "Healer mode",
-			index = 3,
-		},
-		["cure"] = {
-			icon = "cure",
-			command = { [0] = "co ~cure,?", [1] = "nc ~cure,?" },
-			strategy = "cure",
-			tooltip = "Cure (poison, disease, etc.)",
-			index = 4,
-		},
-		["melee"] = {
-			icon = "dps",
-			command = { [0] = "co ~melee,?" },
-			strategy = "melee",
-			tooltip = "Melee mode",
-			index = 5,
-		},
-	})
-	CreateToolBar(frame, -y, "CLASS_HUNTER", {
-		["dps"] = {
-			icon = "dps",
-			command = { [0] = "co +dps,?" },
-			strategy = "dps",
-			tooltip = "DPS mode",
-			index = 0,
-		},
-		["aoe"] = {
-			icon = "aoe",
-			command = { [0] = "co ~aoe,?" },
-			strategy = "aoe",
-			tooltip = "Use AOE abilities",
-			index = 1,
-		},
-		["bspeed"] = {
-			icon = "bspeed",
-			command = { [0] = "co ~bspeed,?", [1] = "nc ~bspeed,?" },
-			strategy = "bspeed",
-			tooltip = "Buff movement speed",
-			index = 2,
-		},
-		["bdps"] = {
-			icon = "bdps",
-			command = { [0] = "co ~bdps,?", [1] = "nc ~bdps,?" },
-			strategy = "bdps",
-			tooltip = "Buff DPS",
-			index = 3,
-		},
-		["rnature"] = {
-			icon = "bmana",
-			command = { [0] = "co ~rnature,?", [1] = "nc ~rnature,?" },
-			strategy = "rnature",
-			tooltip = "Provide nature resistance",
-			index = 4,
-		},
-		["pet"] = {
-			icon = "pet",
-			command = { [0] = "co ~pet,?", [1] = "nc ~pet,?" },
-			strategy = "pet",
-			tooltip = "Use pet",
-			index = 5,
-		},
-	})
-	CreateToolBar(frame, -y, "CLASS_MAGE", {
-		["arcane"] = {
-			icon = "arcane",
-			command = { [0] = "co +arcane,?" },
-			strategy = "arcane",
-			tooltip = "Use arcane spells",
-			index = 0,
-		},
-		["fire"] = {
-			icon = "fire",
-			command = { [0] = "co +fire,?" },
-			strategy = "fire",
-			tooltip = "Use fire spells",
-			index = 1,
-		},
-		["fire_aoe"] = {
-			icon = "fire_aoe",
-			command = { [0] = "co ~fire aoe,?" },
-			strategy = "fire aoe",
-			tooltip = "Use fire AOE abilities",
-			index = 2,
-		},
-		["frost"] = {
-			icon = "frost",
-			command = { [0] = "co +frost,?" },
-			strategy = "frost",
-			tooltip = "Use frost spells",
-			index = 3,
-		},
-		["frost_aoe"] = {
-			icon = "frost_aoe",
-			command = { [0] = "co ~frost aoe,?" },
-			strategy = "frost aoe",
-			tooltip = "Use frost AOE abilities",
-			index = 4,
-		},
-		["bmana"] = {
-			icon = "bmana",
-			command = { [0] = "co ~bmana,?", [1] = "nc ~bmana,?" },
-			strategy = "bmana",
-			tooltip = "Buff mana regen",
-			index = 5,
-		},
-		["bdps"] = {
-			icon = "bdps",
-			command = { [0] = "co ~bdps,?", [1] = "nc ~bdps,?" },
-			strategy = "bdps",
-			tooltip = "Buff DPS",
-			index = 6,
-		},
-		["cure"] = {
-			icon = "cure",
-			command = { [0] = "co ~cure,?", [1] = "nc ~cure,?" },
-			strategy = "cure",
-			tooltip = "Cure (poison, disease, etc.)",
-			index = 7,
-		},
-	})
-	CreateToolBar(frame, -y, "CLASS_PALADIN", {
-		["dps"] = {
-			icon = "dps",
-			command = { [0] = "co +dps,?" },
-			strategy = "dps",
-			tooltip = "DPS mode",
-			index = 0,
-		},
-		["tank"] = {
-			icon = "tank",
-			command = { [0] = "co +tank,?" },
-			strategy = "tank",
-			tooltip = "Tank mode",
-			index = 1,
-		},
-		["heal"] = {
-			icon = "heal",
-			command = { [0] = "co +heal,?" },
-			strategy = "heal",
-			tooltip = "Healer mode",
-			index = 2,
-		},
-		["cure"] = {
-			icon = "cure",
-			command = { [0] = "co ~cure,?", [1] = "nc ~cure,?" },
-			strategy = "cure",
-			tooltip = "Cure (poison, disease, etc.)",
-			index = 3,
-		},
-		["bthreat"] = {
-			icon = "bthreat",
-			command = { [0] = "nc ~bthreat,?" },
-			strategy = "bthreat",
-			tooltip = "Increase threat generation",
-			index = 4,
-		},
-	})
-	CreateToolBar(frame, -y, "CLASS_PRIEST", {
-		["heal"] = {
-			icon = "heal",
-			command = { [0] = "co +heal,?" },
-			strategy = "heal",
-			tooltip = "Healer mode",
-			index = 0,
-		},
-		["holy"] = {
-			icon = "holy",
-			command = { [0] = "co +holy,?" },
-			strategy = "holy",
-			tooltip = "Use holy spells",
-			index = 1,
-		},
-		["shadow"] = {
-			icon = "shadow",
-			command = { [0] = "co +shadow,?" },
-			strategy = "shadow",
-			tooltip = "DPS mode: shadow",
-			index = 2,
-		},
-		["shadow_aoe"] = {
-			icon = "shadow_aoe",
-			command = { [0] = "co ~shadow aoe,?" },
-			strategy = "shadow aoe",
-			tooltip = "Use shadow AOE abilities",
-			index = 3,
-		},
-		["shadow_debuff"] = {
-			icon = "shadow_debuff",
-			command = { [0] = "co ~shadow debuff,?" },
-			strategy = "shadow debuff",
-			tooltip = "Use shadow debuffs",
-			index = 4,
-		},
-		["cure"] = {
-			icon = "cure",
-			command = { [0] = "co ~cure,?", [1] = "nc ~cure,?" },
-			strategy = "cure",
-			tooltip = "Cure (poison, disease, etc.)",
-			index = 5,
-		},
-		["rshadow"] = {
-			icon = "rshadow",
-			command = { [0] = "co ~rshadow,?", [1] = "nc ~rshadow,?" },
-			strategy = "rshadow",
-			tooltip = "Provide shadow resistance",
-			index = 6,
-		},
-	})
-	CreateToolBar(frame, -y, "CLASS_ROGUE", {
-		["dps"] = {
-			icon = "dps",
-			command = { [0] = "co +dps,?" },
-			strategy = "dps",
-			tooltip = "DPS mode",
-			index = 0,
-		},
-		["aoe"] = {
-			icon = "aoe",
-			command = { [0] = "co ~aoe,?" },
-			strategy = "aoe",
-			tooltip = "Use AOE abilities",
-			index = 1,
-		},
-	})
-	CreateToolBar(frame, -y, "CLASS_SHAMAN", {
-		["caster"] = {
-			icon = "caster",
-			command = { [0] = "co +caster,?" },
-			strategy = "caster",
-			tooltip = "Caster mode",
-			index = 0,
-		},
-		["caster_aoe"] = {
-			icon = "caster_aoe",
-			command = { [0] = "co ~caster aoe,?" },
-			strategy = "caster aoe",
-			tooltip = "Use caster AOE abilities",
-			index = 1,
-		},
-		["heal"] = {
-			icon = "heal",
-			command = { [0] = "co +heal,+threat,?" },
-			strategy = "heal",
-			tooltip = "Healer mode",
-			index = 2,
-		},
-		["melee"] = {
-			icon = "dps",
-			command = { [0] = "co +melee,?" },
-			strategy = "melee",
-			tooltip = "Melee mode",
-			index = 3,
-		},
-		["melee_aoe"] = {
-			icon = "aoe",
-			command = { [0] = "co ~melee aoe,?" },
-			strategy = "melee aoe",
-			tooltip = "Use melee AOE abilities",
-			index = 4,
-		},
-		["totems"] = {
-			icon = "totems",
-			command = { [0] = "co ~totems,?" },
-			strategy = "totems",
-			tooltip = "Use totems",
-			index = 5,
-		},
-		["cure"] = {
-			icon = "cure",
-			command = { [0] = "co ~cure,?", [1] = "nc ~cure,?" },
-			strategy = "cure",
-			tooltip = "Cure (poison, disease, etc.)",
-			index = 6,
-		},
-	})
-	CreateToolBar(frame, -y, "CLASS_WARLOCK", {
-		["dps"] = {
-			icon = "dps",
-			command = { [0] = "co +dps,?" },
-			strategy = "dps",
-			tooltip = "DPS mode",
-			index = 0,
-		},
-		["dps_debuff"] = {
-			icon = "dps_debuff",
-			command = { [0] = "co ~dps debuff,?" },
-			strategy = "dps debuff",
-			tooltip = "Use DPS debuffs",
-			index = 1,
-		},
-		["caster_aoe"] = {
-			icon = "caster_aoe",
-			command = { [0] = "co ~aoe,?" },
-			strategy = "aoe",
-			tooltip = "Use AOE abilities",
-			index = 2,
-		},
-		["tank"] = {
-			icon = "tank",
-			command = { [0] = "co +tank,?" },
-			strategy = "tank",
-			tooltip = "Summon tanky demons",
-			index = 3,
-		},
-		["pet"] = {
-			icon = "pet",
-			command = { [0] = "co ~pet,?", [1] = "nc ~pet,?" },
-			strategy = "pet",
-			tooltip = "Use pet",
-			index = 4,
-		},
-	})
-	CreateToolBar(frame, -y, "CLASS_WARRIOR", {
-		["dps"] = {
-			icon = "dps",
-			command = { [0] = "co +dps,?" },
-			strategy = "dps",
-			tooltip = "DPS mode",
-			index = 0,
-		},
-		["warrior_aoe"] = {
-			icon = "warrior_aoe",
-			command = { [0] = "co ~aoe,?" },
-			strategy = "aoe",
-			tooltip = "Use AOE abilities",
-			index = 1,
-		},
-		["tank"] = {
-			icon = "tank",
-			command = { [0] = "co +tank,?" },
-			strategy = "tank",
-			tooltip = "Tank mode",
-			index = 2,
-		},
-	})
-	CreateToolBar(frame, -y, "CLASS_DEATHKNIGHT", {
-		["blood"] = {
-			icon = "tank",
-			command = { [0] = "co +blood,?", [1] = "nc +blood,?" },
-			strategy = "blood",
-			tooltip = "Blood (tank)",
-			index = 0,
-		},
-		["frost"] = {
-			icon = "frost",
-			command = { [0] = "co +frost,?", [1] = "nc +frost,?" },
-			strategy = "frost",
-			tooltip = "Frost DPS",
-			index = 1,
-		},
-		["unholy"] = {
-			icon = "rshadow",
-			command = { [0] = "co +unholy,?", [1] = "nc +unholy,?" },
-			strategy = "unholy",
-			tooltip = "Unholy DPS",
-			index = 2,
-		},
-		["dk_aoe"] = {
-			icon = "aoe",
-			command = { [0] = "co ~aoe,?" },
-			strategy = "aoe",
-			tooltip = "Use AOE abilities",
-			index = 3,
-		},
-	})
-
-	y = y + 25
-	CreateToolBar(frame, -y, "CLASS_PALADIN_BUFF", {
-		["bmana"] = {
-			icon = "bmana",
-			command = { [0] = "co +bmana,?", [1] = "nc +bmana,?" },
-			strategy = "bmana",
-			tooltip = "Buff mana regen",
-			index = 0,
-		},
-		["bhealth"] = {
-			icon = "bhealth",
-			command = { [0] = "co +bhealth,?", [1] = "nc +bhealth,?" },
-			strategy = "bhealth",
-			tooltip = "Buff health regen",
-			index = 1,
-		},
-		["bdps"] = {
-			icon = "bdps",
-			command = { [0] = "co +bdps,?", [1] = "nc +bdps,?" },
-			strategy = "bdps",
-			tooltip = "Buff melee DPS",
-			index = 2,
-		},
-		["bstats"] = {
-			icon = "holy",
-			command = { [0] = "co +bstats,?", [1] = "nc +bstats,?" },
-			strategy = "bstats",
-			tooltip = "Buff stats",
-			index = 3,
-		},
-	})
-	CreateToolBar(frame, -y, "CLASS_SHAMAN_BUFF", {
-		["earth"] = {
-			icon = "earth",
-			command = { [0] = "co +earth,?" },
-			strategy = "earth",
-			tooltip = "Use earth spells",
-			index = 0,
-		},
-		["fire"] = {
-			icon = "fire",
-			command = { [0] = "co +fire,?" },
-			strategy = "fire",
-			tooltip = "Use fire spells",
-			index = 1,
-		},
-		["frost"] = {
-			icon = "frost",
-			command = { [0] = "co +frost,?" },
-			strategy = "frost",
-			tooltip = "Use frost spells",
-			index = 2,
-		},
-		["air"] = {
-			icon = "air",
-			command = { [0] = "co +air,?" },
-			strategy = "air",
-			tooltip = "Use air spells",
-			index = 3,
-		},
-		["bmana"] = {
-			icon = "bmana",
-			command = { [0] = "co ~bmana,?", [1] = "nc ~bmana,?" },
-			strategy = "bmana",
-			tooltip = "Buff mana regen",
-			index = 4,
-		},
-		["bdps"] = {
-			icon = "bdps",
-			command = { [0] = "co ~bdps,?", [1] = "nc ~bdps,?" },
-			strategy = "bdps",
-			tooltip = "Buff DPS",
-			index = 5,
-		},
-	})
-
-	y = y + 25
-	CreateToolBar(frame, -y, "CLASS_PALADIN_AURA", {
-		["baoe"] = {
-			icon = "aoe",
-			command = { [0] = "co +baoe,?", [1] = "nc +baoe,?" },
-			strategy = "baoe",
-			tooltip = "Retribution aura",
-			index = 0,
-		},
-		["rfire"] = {
-			icon = "fire",
-			command = { [0] = "co +rfire,?", [1] = "nc +rfire,?" },
-			strategy = "rfire",
-			tooltip = "Fire resistance aura",
-			index = 1,
-		},
-		["rfrost"] = {
-			icon = "frost",
-			command = { [0] = "co +rfrost,?", [1] = "nc +rfrost,?" },
-			strategy = "rfrost",
-			tooltip = "Frost resistance aura",
-			index = 2,
-		},
-		["rshadow"] = {
-			icon = "rshadow",
-			command = { [0] = "co +rshadow,?", [1] = "nc +rshadow,?" },
-			strategy = "rshadow",
-			tooltip = "Shadow resistance aura",
-			index = 3,
-		},
-		["barmor"] = {
-			icon = "barmor",
-			command = { [0] = "co +barmor,?", [1] = "nc +barmor,?" },
-			strategy = "barmor",
-			tooltip = "Devotion aura",
-			index = 4,
-		},
-	})
-
-	frame:SetHeight(y + 25)
 	return frame
 end
 
-function ResolveSelectedBotClass(bot)
-	local class = "UNKNOWN"
-	if bot["class"] ~= nil then
-		class = ClassToken(bot["class"])
-	end
-	if GetUnitName("target") ~= nil then
-		local _, unitClass = UnitClass("target")
-		if unitClass ~= nil then
-			class = unitClass
-		end
-	end
-	return class
+-- Bot panel: Blizzard-style UIPanel opened when a bot is targeted.
+
+local BP_WIDTH = 384
+local BP_HEIGHT = 512
+local BP_PAD = 16
+local BP_HEADER_H = 80
+local BP_XP_H = 16
+local BP_TOP_CHROME = 36
+local BP_ROW_H = 32
+local BP_CHECK_H = 26
+local BP_SECTION_GAP = 14
+local BP_COL2_X = 178
+local BP_LABEL_W = 110
+local BP_CONTENT_W = BP_WIDTH - 48
+local BP_DROPDOWN_SEQ = 0
+
+local function BpScrollTopOffset()
+	return BP_TOP_CHROME + BP_HEADER_H + 8 + BP_XP_H + 8
 end
 
-function RefreshSelectedBotPanel(sender)
-	local bot = botTable[sender]
-	if bot == nil or bot["strategy"] == nil or bot["role"] == nil then
-		SelectedBotPanel:Hide()
+local function BpCapitalize(s)
+	if s == nil or s == "" then
+		return "-"
+	end
+	return string.upper(string.sub(s, 1, 1)) .. string.sub(s, 2)
+end
+
+-- value = command token, label = UI text
+local FORMATION_OPTS = {
+	{ value = "near", label = "Near" },
+	{ value = "queue", label = "Queue" },
+	{ value = "melee", label = "Melee" },
+	{ value = "arrow", label = "Arrow" },
+	{ value = "far", label = "Far" },
+	{ value = "circle", label = "Circle" },
+	{ value = "line", label = "Line" },
+	{ value = "shield", label = "Shield" },
+	{ value = "chaos", label = "Chaos" },
+}
+local STANCE_OPTS = {
+	{ value = "near", label = "Near" },
+	{ value = "tank", label = "Tank" },
+	{ value = "turnback", label = "Turn back" },
+	{ value = "behind", label = "Behind" },
+}
+local LOOT_OPTS = {
+	{ value = "normal", label = "Trade skills" },
+	{ value = "gray", label = "Gray items" },
+	{ value = "disenchant", label = "Disenchant" },
+	{ value = "all", label = "Everything" },
+}
+local SAVEMANA_OPTS = {
+	{ value = "1", label = "1 - Always cast" },
+	{ value = "2", label = "2 - Low" },
+	{ value = "3", label = "3 - Medium" },
+	{ value = "4", label = "4 - High" },
+	{ value = "5", label = "5 - Very high" },
+}
+local MARK_OPTS = {
+	{ value = "skull", label = "Skull" },
+	{ value = "cross", label = "Cross" },
+	{ value = "circle", label = "Circle" },
+	{ value = "star", label = "Star" },
+	{ value = "square", label = "Square" },
+	{ value = "triangle", label = "Triangle" },
+	{ value = "diamond", label = "Diamond" },
+	{ value = "moon", label = "Moon" },
+}
+
+-- Behavior toggles grouped for layout (two columns within each group).
+local BEHAVIOR_GROUPS = {
+	{
+		title = "Survival",
+		items = {
+			{ label = "Eat and drink", token = "food" },
+			{ label = "Use potions", token = "potions" },
+			{ label = "Conserve mana", token = "conserve_mana" },
+			{ label = "Defense", token = "defense" },
+		},
+	},
+	{
+		title = "Activity",
+		items = {
+			{ label = "Buff allies", token = "buff" },
+			{ label = "Loot corpses", token = "loot" },
+			{ label = "Gather nodes", token = "gather" },
+			{ label = "Grind mobs", token = "grind" },
+			{ label = "Combat boosts", token = "boost" },
+			{ label = "Mark targets", token = "mark_rti" },
+		},
+	},
+}
+
+-- Class strategies: token + readable label
+local CLASS_STRATEGIES = {
+	DRUID = {
+		{ token = "bear", label = "Bear form" },
+		{ token = "cat", label = "Cat form" },
+		{ token = "caster", label = "Caster" },
+		{ token = "heal", label = "Healing" },
+		{ token = "cure", label = "Dispels" },
+		{ token = "melee", label = "Melee" },
+	},
+	HUNTER = {
+		{ token = "dps", label = "Damage" },
+		{ token = "aoe", label = "Area damage" },
+		{ token = "bdps", label = "Buff damage" },
+		{ token = "pet", label = "Pet" },
+		{ token = "rnature", label = "Nature resist" },
+	},
+	MAGE = {
+		{ token = "dps", label = "Damage" },
+		{ token = "aoe", label = "Area damage" },
+		{ token = "bmana", label = "Buff mana" },
+		{ token = "bdps", label = "Buff damage" },
+		{ token = "rfire", label = "Fire resist" },
+	},
+	PALADIN = {
+		{ token = "dps", label = "Damage" },
+		{ token = "tank", label = "Tank" },
+		{ token = "heal", label = "Healing" },
+		{ token = "cure", label = "Dispels" },
+		{ token = "bthreat", label = "Buff threat" },
+	},
+	PRIEST = {
+		{ token = "heal", label = "Healing" },
+		{ token = "holy", label = "Holy" },
+		{ token = "shadow", label = "Shadow" },
+		{ token = "cure", label = "Dispels" },
+		{ token = "rshadow", label = "Shadow resist" },
+	},
+	ROGUE = {
+		{ token = "dps", label = "Damage" },
+		{ token = "aoe", label = "Area damage" },
+	},
+	SHAMAN = {
+		{ token = "caster", label = "Caster" },
+		{ token = "melee", label = "Melee" },
+		{ token = "heal", label = "Healing" },
+		{ token = "totems", label = "Totems" },
+		{ token = "cure", label = "Dispels" },
+	},
+	WARLOCK = {
+		{ token = "dps", label = "Damage" },
+		{ token = "dps_debuff", label = "Damage debuffs" },
+		{ token = "pet", label = "Pet" },
+		{ token = "tank", label = "Tank pet" },
+	},
+	WARRIOR = {
+		{ token = "dps", label = "Damage" },
+		{ token = "tank", label = "Tank" },
+		{ token = "aoe", label = "Area damage" },
+	},
+	DEATHKNIGHT = {
+		{ token = "dps", label = "Damage" },
+		{ token = "tank", label = "Tank" },
+		{ token = "aoe", label = "Area damage" },
+		{ token = "bdeath", label = "Death coil buff" },
+	},
+}
+
+local function SendToCurrentBot(cmd)
+	if CurrentBot == nil or cmd == nil or cmd == "" then
 		return
 	end
+	SendBotCommand(cmd, "WHISPER", nil, CurrentBot)
+end
 
-	local selected = GetUnitName("target")
-	if CurrentBot ~= nil then
-		selected = CurrentBot
+local function SendStrategyToggle(token, on)
+	local prefix = "+"
+	if not on then
+		prefix = "-"
 	end
-	if sender ~= selected then
+	SendToCurrentBot("co " .. prefix .. token .. ",?")
+	SendToCurrentBot("nc " .. prefix .. token .. ",?")
+end
+
+function QueryBotPanelState(name)
+	if name == nil then
 		return
 	end
+	QuerySelectedBot(name)
+	wait(0.05, function()
+		SendBotCommand(EnsureAddonPrefix("stats"), "WHISPER", nil, name)
+	end)
+end
 
-	SelectedBotPanel:Show()
-	local class = ResolveSelectedBotClass(bot)
-	SetFrameColor(SelectedBotPanel, class)
-	SelectedBotPanel.header.role.texture:SetTexture(
-		"Interface\\Addons\\Mangosbot\\Images\\role_" .. bot["role"] .. ".tga"
-	)
-	SelectedBotPanel.header.text:SetText(sender)
+-- "12g 34s 5c" / "5g 20s" / "0" -> copper integer
+local function ParseMoneyToCopper(str)
+	if str == nil then
+		return 0
+	end
+	str = trim2(tostring(str))
+	if str == "" or str == "0" then
+		return 0
+	end
+	local g = tonumber(string.match(str, "(%d+)%s*[gG]")) or 0
+	local s = tonumber(string.match(str, "(%d+)%s*[sS]")) or 0
+	local c = tonumber(string.match(str, "(%d+)%s*[cC]")) or 0
+	if g == 0 and s == 0 and c == 0 then
+		local n = tonumber(str)
+		if n ~= nil then
+			return n
+		end
+	end
+	return g * 10000 + s * 100 + c
+end
 
-	local width = 0
-	local height = 0
-	for toolbarName, toolbar in pairs(ToolBars) do
-		local panelVisible = true
-		if string.find(toolbarName, "CLASS_") == 1 then
-			if string.find(string.sub(toolbarName, 7), class) == 1 then
-				SelectedBotPanel.toolbar[toolbarName]:Show()
+-- bot.xp examples: "78/200%", "1234/5000", "45%"
+local function ParseXpProgress(xpStr)
+	if xpStr == nil or xpStr == "" then
+		return nil, nil, nil
+	end
+	xpStr = trim2(xpStr)
+	local a = string.match(xpStr, "(%d+)%s*/%s*%d+%%")
+	if a ~= nil then
+		return tonumber(a), 100, xpStr
+	end
+	local cur, maxv = string.match(xpStr, "(%d+)%s*/%s*(%d+)")
+	if cur ~= nil and maxv ~= nil then
+		local m = tonumber(maxv)
+		if m ~= nil and m > 0 then
+			return tonumber(cur), m, xpStr
+		end
+	end
+	local pct = string.match(xpStr, "(%d+)%%")
+	if pct ~= nil then
+		return tonumber(pct), 100, xpStr
+	end
+	return nil, nil, xpStr
+end
+
+local function CreateMoneyDisplay(parent)
+	local f = CreateFrame("Frame", nil, parent)
+	f:SetHeight(14)
+
+	local function makeCoin()
+		local t = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+		t:SetJustifyH("LEFT")
+		local icon = f:CreateTexture(nil, "OVERLAY")
+		icon:SetTexture("Interface\\MoneyFrame\\UI-MoneyIcons")
+		icon:SetWidth(13)
+		icon:SetHeight(13)
+		return t, icon
+	end
+
+	f.goldText, f.goldIcon = makeCoin()
+	f.goldIcon:SetTexCoord(0, 0.25, 0, 1)
+	f.silverText, f.silverIcon = makeCoin()
+	f.silverIcon:SetTexCoord(0.25, 0.5, 0, 1)
+	f.copperText, f.copperIcon = makeCoin()
+	f.copperIcon:SetTexCoord(0.5, 0.75, 0, 1)
+
+	function f.SetCopper(moneyFrame, copper)
+		if copper == nil or copper < 0 then
+			copper = 0
+		end
+		local g = math.floor(copper / 10000)
+		local s = math.floor((copper - g * 10000) / 100)
+		local c = math.floor(copper - g * 10000 - s * 100)
+
+		local x = 0
+		local function place(text, icon, amount, always)
+			if amount > 0 or always then
+				text:SetText(tostring(amount))
+				text:Show()
+				icon:Show()
+				text:ClearAllPoints()
+				icon:ClearAllPoints()
+				text:SetPoint("LEFT", f, "LEFT", x, 0)
+				local tw = 12
+				if text.GetStringWidth then
+					tw = text:GetStringWidth() or tw
+				end
+				icon:SetPoint("LEFT", text, "RIGHT", 1, 0)
+				x = x + tw + 13 + 6
 			else
-				SelectedBotPanel.toolbar[toolbarName]:Hide()
-				panelVisible = false
+				text:Hide()
+				icon:Hide()
 			end
 		end
-		local numButtons = 0
-		for buttonName, button in pairs(toolbar) do
-			ToggleButton(SelectedBotPanel, toolbarName, buttonName, BotButtonIsActive(bot, button))
-			numButtons = numButtons + 1
+
+		place(moneyFrame.goldText, moneyFrame.goldIcon, g, false)
+		place(moneyFrame.silverText, moneyFrame.silverIcon, s, g > 0)
+		place(moneyFrame.copperText, moneyFrame.copperIcon, c, true)
+		moneyFrame:SetWidth(x)
+	end
+
+	f:SetCopper(0)
+	return f
+end
+
+local function CreateXpBar(parent)
+	local bar = CreateFrame("StatusBar", nil, parent)
+	bar:SetHeight(BP_XP_H)
+	bar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
+	if bar.SetStatusBarColor then
+		bar:SetStatusBarColor(0.58, 0.0, 0.55)
+	end
+	bar:SetMinMaxValues(0, 100)
+	bar:SetValue(0)
+
+	local bg = bar:CreateTexture(nil, "BACKGROUND")
+	bg:SetAllPoints()
+	bg:SetTexture("Interface\\TargetingFrame\\UI-StatusBar")
+	bg:SetVertexColor(0.0, 0.0, 0.0, 0.85)
+
+	local border = CreateFrame("Frame", nil, bar)
+	border:SetPoint("TOPLEFT", bar, "TOPLEFT", -2, 2)
+	border:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT", 2, -2)
+	if border.SetBackdrop then
+		border:SetBackdrop({
+			edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+			edgeSize = 10,
+			insets = { left = 2, right = 2, top = 2, bottom = 2 },
+		})
+		border:SetBackdropBorderColor(0.6, 0.6, 0.6, 1)
+	end
+	if border.SetFrameLevel and bar.GetFrameLevel then
+		border:SetFrameLevel(bar:GetFrameLevel() + 2)
+	end
+
+	bar.text = bar:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+	bar.text:SetPoint("CENTER", bar, "CENTER", 0, 0)
+	bar.text:SetText("Experience")
+
+	function bar.SetXp(statusBar, xpStr)
+		local cur, maxv, label = ParseXpProgress(xpStr)
+		if cur == nil or maxv == nil then
+			statusBar:SetMinMaxValues(0, 100)
+			statusBar:SetValue(0)
+			statusBar.text:SetText("Experience: -")
+			return
 		end
-		if panelVisible then
-			height = height + 1
-			if width < numButtons then
-				width = numButtons
-			end
+		statusBar:SetMinMaxValues(0, maxv)
+		statusBar:SetValue(cur)
+		if label ~= nil and label ~= "" then
+			statusBar.text:SetText(label)
+		else
+			statusBar.text:SetText(tostring(cur) .. " / " .. tostring(maxv))
 		end
 	end
-	ResizeBotPanel(SelectedBotPanel, width * 25 + 20, height * 25 + 25)
+
+	return bar
+end
+
+local function GetBotRoleText(bot)
+	if bot.role == "tank" then
+		return "Tank"
+	end
+	if bot.role == "heal" then
+		return "Healer"
+	end
+	if bot.role ~= nil then
+		return "Damage"
+	end
+	return "Role unknown"
+end
+
+local function GetClassForBot(bot)
+	if bot.class ~= nil then
+		return bot.class
+	end
+	return "Unknown"
+end
+
+local function OptionLabel(opts, value)
+	if value == nil or value == "" then
+		return "-"
+	end
+	for i = 1, table.getn(opts) do
+		if opts[i].value == value then
+			return opts[i].label
+		end
+	end
+	return BpCapitalize(value)
+end
+
+local function CreateSectionHeader(parent, text)
+	local fs = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+	fs:SetText(text)
+	fs:SetTextColor(1.0, 0.82, 0.0)
+	fs:SetJustifyH("LEFT")
+	return fs
+end
+
+local function CreateDivider(parent, width)
+	-- 1px rule (not a 9-slice border atlas — those stretch badly).
+	local tex = parent:CreateTexture(nil, "ARTWORK")
+	tex:SetTexture("Interface\\Tooltips\\UI-Tooltip-Background")
+	tex:SetHeight(1)
+	tex:SetWidth(width)
+	tex:SetVertexColor(0.5, 0.5, 0.5, 0.7)
+	return tex
+end
+
+-- Named dropdown (required on 1.12/TBC/WotLK). opts = { {value=, label=}, ... }
+local function CreateSettingDropdown(parent, label, opts, onSelect)
+	local title = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+	title:SetText(label)
+	title:SetWidth(BP_LABEL_W)
+	title:SetJustifyH("LEFT")
+
+	BP_DROPDOWN_SEQ = BP_DROPDOWN_SEQ + 1
+	local ddName = "MangosbotDD" .. BP_DROPDOWN_SEQ
+	local dd = CreateFrame("Frame", ddName, parent, "UIDropDownMenuTemplate")
+	if UIDropDownMenu_SetWidth then
+		UIDropDownMenu_SetWidth(dd, 160)
+	end
+
+	local currentValue = nil
+
+	local function DisplayFor(val)
+		return OptionLabel(opts, val)
+	end
+
+	local function RefreshMenu()
+		if not UIDropDownMenu_Initialize then
+			return
+		end
+		UIDropDownMenu_Initialize(dd, function()
+			for oi = 1, table.getn(opts) do
+				local opt = opts[oi]
+				local info = {}
+				info.text = opt.label
+				info.value = opt.value
+				info.checked = (opt.value == currentValue)
+				info.func = function()
+					currentValue = opt.value
+					if UIDropDownMenu_SetSelectedValue then
+						UIDropDownMenu_SetSelectedValue(dd, currentValue)
+					end
+					local textFS = getglobal(ddName .. "Text")
+					if textFS ~= nil and textFS.SetText then
+						textFS:SetText(opt.label)
+					end
+					if onSelect ~= nil then
+						onSelect(currentValue)
+					end
+				end
+				UIDropDownMenu_AddButton(info)
+			end
+		end)
+	end
+
+	RefreshMenu()
+
+	local function SetValue(val)
+		currentValue = val
+		if UIDropDownMenu_SetSelectedValue then
+			UIDropDownMenu_SetSelectedValue(dd, val or "")
+		end
+		local textFS = getglobal(ddName .. "Text")
+		if textFS ~= nil and textFS.SetText then
+			textFS:SetText(DisplayFor(val))
+		end
+	end
+
+	return dd, title, SetValue
+end
+
+local function CreateToggleCheckbox(parent, label, token)
+	BP_DROPDOWN_SEQ = BP_DROPDOWN_SEQ + 1
+	local name = "MangosbotCB" .. BP_DROPDOWN_SEQ
+	local cb = CreateFrame("CheckButton", name, parent, "UICheckButtonTemplate")
+	if cb.SetWidth then
+		cb:SetWidth(24)
+		cb:SetHeight(24)
+	end
+	local textFS = getglobal(name .. "Text")
+	if textFS == nil then
+		textFS = cb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+		textFS:SetPoint("LEFT", cb, "RIGHT", 2, 1)
+	end
+	textFS:SetText(label)
+	cb.text = textFS
+	cb.token = token
+
+	cb:SetScript("OnClick", function()
+		local self = this
+		local on = false
+		if self.GetChecked then
+			on = self:GetChecked() and true or false
+		end
+		SendStrategyToggle(self.token, on)
+	end)
+
+	return cb
+end
+
+local function UpdateBotPanelScrollRange(frame)
+	local scroll = frame.scroll
+	local content = frame.content
+	local bar = frame.scrollbar
+	if scroll == nil or content == nil then
+		return
+	end
+	if scroll.UpdateScrollChildRect then
+		scroll:UpdateScrollChildRect()
+	end
+	if bar == nil then
+		return
+	end
+	local viewH = 0
+	local contentH = frame.contentHeight or 0
+	if scroll.GetHeight then
+		viewH = scroll:GetHeight() or 0
+	end
+	if content.GetHeight then
+		local ch = content:GetHeight()
+		if ch and ch > contentH then
+			contentH = ch
+		end
+	end
+	local range = contentH - viewH
+	if range < 0 then
+		range = 0
+	end
+	if bar.SetMinMaxValues then
+		bar:SetMinMaxValues(0, range)
+	end
+	if bar.SetValueStep then
+		bar:SetValueStep(1)
+	end
+	local cur = 0
+	if bar.GetValue then
+		cur = bar:GetValue() or 0
+	end
+	if cur > range then
+		cur = range
+	end
+	if cur < 0 then
+		cur = 0
+	end
+	if bar.SetValue then
+		bar:SetValue(cur)
+	end
+	if range <= 0 then
+		bar:Hide()
+		if scroll.SetVerticalScroll then
+			scroll:SetVerticalScroll(0)
+		end
+	else
+		bar:Show()
+	end
+end
+
+local function LayoutContentHeight(frame)
+	local content = frame.content
+	if content == nil then
+		return
+	end
+	local h = frame.contentHeight or 100
+	if h < 100 then
+		h = 100
+	end
+	content:SetHeight(h)
+	UpdateBotPanelScrollRange(frame)
+end
+
+local function ScrollBotPanelBy(scroll, delta)
+	if scroll == nil then
+		return
+	end
+	local bar = nil
+	if scroll.GetName then
+		bar = getglobal(scroll:GetName() .. "ScrollBar")
+	end
+	local maxScroll = 0
+	local cur = 0
+	if bar and bar.GetMinMaxValues then
+		local _, maxV = bar:GetMinMaxValues()
+		if maxV ~= nil then
+			maxScroll = maxV
+		end
+		if bar.GetValue then
+			cur = bar:GetValue() or 0
+		end
+		local nextScroll = cur + delta
+		if nextScroll < 0 then
+			nextScroll = 0
+		end
+		if nextScroll > maxScroll then
+			nextScroll = maxScroll
+		end
+		bar:SetValue(nextScroll)
+		return
+	end
+	if scroll.GetVerticalScrollRange then
+		maxScroll = scroll:GetVerticalScrollRange() or 0
+	end
+	if scroll.GetVerticalScroll then
+		cur = scroll:GetVerticalScroll() or 0
+	end
+	local nextScroll = cur + delta
+	if nextScroll < 0 then
+		nextScroll = 0
+	end
+	if nextScroll > maxScroll then
+		nextScroll = maxScroll
+	end
+	if scroll.SetVerticalScroll then
+		scroll:SetVerticalScroll(nextScroll)
+	end
+end
+
+local function PlaceDropdownRow(content, y, label, opts, cmdPrefix)
+	local row = CreateFrame("Frame", nil, content)
+	row:SetWidth(BP_CONTENT_W)
+	row:SetHeight(BP_ROW_H)
+	row:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -y)
+	local dd, title, setter = CreateSettingDropdown(row, label, opts, function(v)
+		SendToCurrentBot(cmdPrefix .. v)
+	end)
+	title:SetPoint("LEFT", row, "LEFT", 0, 0)
+	dd:SetPoint("LEFT", row, "LEFT", BP_LABEL_W - 12, -2)
+	return setter, y + BP_ROW_H
+end
+
+local function PlaceCheckboxGrid(content, y, items, store)
+	local col = 0
+	local rowY = y
+	for i = 1, table.getn(items) do
+		local t = items[i]
+		local cb = CreateToggleCheckbox(content, t.label, t.token)
+		local x = 0
+		if col == 1 then
+			x = BP_COL2_X
+		end
+		cb:SetPoint("TOPLEFT", content, "TOPLEFT", x, -rowY)
+		store[t.token] = cb
+		col = col + 1
+		if col > 1 then
+			col = 0
+			rowY = rowY + BP_CHECK_H
+		end
+	end
+	if col == 1 then
+		rowY = rowY + BP_CHECK_H
+	end
+	return rowY
+end
+
+function CreateBotPanel()
+	local frame = CreateFrame("Frame", "MangosbotBotFrame", UIParent)
+	frame:Hide()
+	frame:SetWidth(BP_WIDTH)
+	frame:SetHeight(BP_HEIGHT)
+	frame:SetPoint("CENTER", UIParent, "CENTER")
+	frame:SetFrameStrata("MEDIUM")
+	frame:SetMovable(true)
+	frame:EnableMouse(true)
+	frame:RegisterForDrag("LeftButton")
+	frame:SetScript("OnDragStart", function()
+		this:StartMoving()
+	end)
+	frame:SetScript("OnDragStop", function()
+		this:StopMovingOrSizing()
+	end)
+
+	-- Opaque panel (dialog bg alone is often see-through on custom UIs)
+	frame:SetBackdrop({
+		bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+		edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
+		tile = true,
+		tileSize = 16,
+		edgeSize = 32,
+		insets = { left = 11, right = 12, top = 12, bottom = 11 },
+	})
+	frame:SetBackdropColor(0.05, 0.05, 0.08, 1.0)
+	frame:SetBackdropBorderColor(0.8, 0.8, 0.8, 1.0)
+	local solidBg = frame:CreateTexture(nil, "BACKGROUND")
+	solidBg:SetTexture("Interface\\Tooltips\\UI-Tooltip-Background")
+	solidBg:SetVertexColor(0.05, 0.05, 0.08, 1.0)
+	solidBg:SetPoint("TOPLEFT", frame, "TOPLEFT", 12, -12)
+	solidBg:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -12, 12)
+
+	-- Title bar (dialog header style)
+	local titleBg = frame:CreateTexture(nil, "ARTWORK")
+	titleBg:SetTexture("Interface\\DialogFrame\\UI-DialogBox-Header")
+	titleBg:SetWidth(300)
+	titleBg:SetHeight(64)
+	titleBg:SetPoint("TOP", frame, "TOP", 0, 12)
+	frame.titleText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+	frame.titleText:SetPoint("TOP", titleBg, "TOP", 0, -14)
+	frame.titleText:SetText("Bot")
+
+	local close = CreateFrame("Button", "MangosbotBotFrameClose", frame, "UIPanelCloseButton")
+	close:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -4, -4)
+	close:SetScript("OnClick", function()
+		HideBotPanel()
+	end)
+
+	-- Summary header
+	local header = CreateFrame("Frame", nil, frame)
+	header:SetPoint("TOPLEFT", frame, "TOPLEFT", BP_PAD, -BP_TOP_CHROME)
+	header:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -BP_PAD, -BP_TOP_CHROME)
+	header:SetHeight(BP_HEADER_H)
+	frame.header = header
+
+	local portrait = CreateFrame("Frame", nil, header)
+	portrait:SetWidth(64)
+	portrait:SetHeight(64)
+	portrait:SetPoint("TOPLEFT", header, "TOPLEFT", 4, -2)
+	portrait.texture = portrait:CreateTexture(nil, "ARTWORK")
+	portrait.texture:SetWidth(60)
+	portrait.texture:SetHeight(60)
+	portrait.texture:SetPoint("CENTER", portrait, "CENTER", 0, 0)
+	portrait.texture:SetTexture("Interface\\CharacterFrame\\TempPortrait")
+	if portrait.SetBackdrop then
+		portrait:SetBackdrop({
+			edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+			edgeSize = 12,
+			insets = { left = 2, right = 2, top = 2, bottom = 2 },
+		})
+		portrait:SetBackdropBorderColor(0.7, 0.7, 0.7, 1)
+	end
+	frame.portrait = portrait
+
+	frame.nameText = header:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+	frame.nameText:SetPoint("TOPLEFT", portrait, "TOPRIGHT", 12, -4)
+	frame.nameText:SetPoint("TOPRIGHT", header, "TOPRIGHT", -4, -4)
+	frame.nameText:SetJustifyH("LEFT")
+	frame.nameText:SetText("Bot")
+
+	frame.subText = header:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+	frame.subText:SetPoint("TOPLEFT", frame.nameText, "BOTTOMLEFT", 0, -4)
+	frame.subText:SetPoint("TOPRIGHT", header, "TOPRIGHT", -4, -4)
+	frame.subText:SetJustifyH("LEFT")
+	frame.subText:SetText("-")
+
+	frame.moneyDisplay = CreateMoneyDisplay(header)
+	frame.moneyDisplay:SetPoint("TOPLEFT", frame.subText, "BOTTOMLEFT", 0, -6)
+
+	-- Keep legacy fields for any external refs
+	frame.classText = frame.subText
+	frame.roleText = frame.subText
+	frame.statsText = frame.subText
+
+	-- Experience bar under header, above scroll body
+	frame.xpBar = CreateXpBar(frame)
+	frame.xpBar:SetPoint("TOPLEFT", frame, "TOPLEFT", BP_PAD + 4, -(BP_TOP_CHROME + BP_HEADER_H + 6))
+	frame.xpBar:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -(BP_PAD + 20), -(BP_TOP_CHROME + BP_HEADER_H + 6))
+	frame.xpBar:SetXp(nil)
+
+	-- Scroll body + Blizzard scrollbar (UIPanelScrollBarTemplate)
+	local scroll = CreateFrame("ScrollFrame", "MangosbotBotFrameScroll", frame)
+	scroll:SetPoint("TOPLEFT", frame, "TOPLEFT", BP_PAD, -BpScrollTopOffset())
+	scroll:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -36, 18)
+	frame.scroll = scroll
+
+	local scrollbar = CreateFrame("Slider", "MangosbotBotFrameScrollScrollBar", scroll, "UIPanelScrollBarTemplate")
+	scrollbar:SetPoint("TOPLEFT", scroll, "TOPRIGHT", 6, -16)
+	scrollbar:SetPoint("BOTTOMLEFT", scroll, "BOTTOMRIGHT", 6, 16)
+	scrollbar:SetMinMaxValues(0, 0)
+	scrollbar:SetValueStep(28)
+	scrollbar:SetValue(0)
+	-- Track fill behind thumb (template has no opaque trough on all clients)
+	local track = scrollbar:CreateTexture(nil, "BACKGROUND")
+	track:SetTexture("Interface\\Tooltips\\UI-Tooltip-Background")
+	track:SetVertexColor(0.08, 0.08, 0.1, 0.95)
+	track:SetPoint("TOPLEFT", scrollbar, "TOPLEFT", 0, -2)
+	track:SetPoint("BOTTOMRIGHT", scrollbar, "BOTTOMRIGHT", 0, 2)
+	scrollbar.track = track
+	scrollbar:SetScript("OnValueChanged", function()
+		local self = this
+		local parent = self:GetParent()
+		local value = 0
+		if self.GetValue then
+			value = self:GetValue() or 0
+		end
+		if parent and parent.SetVerticalScroll then
+			local cur = 0
+			if parent.GetVerticalScroll then
+				cur = parent:GetVerticalScroll() or 0
+			end
+			if cur ~= value then
+				parent:SetVerticalScroll(value)
+			end
+		end
+	end)
+	frame.scrollbar = scrollbar
+
+	scroll:EnableMouseWheel(true)
+	scroll:SetScript("OnMouseWheel", function()
+		local delta = 28
+		if arg1 and arg1 > 0 then
+			delta = -28
+		end
+		ScrollBotPanelBy(this, delta)
+	end)
+	scroll:SetScript("OnVerticalScroll", function()
+		local offset = arg1 or 0
+		local bar = getglobal(this:GetName() .. "ScrollBar")
+		if bar and bar.GetValue and bar.SetValue then
+			if (bar:GetValue() or 0) ~= offset then
+				bar:SetValue(offset)
+			end
+		end
+	end)
+	scroll:SetScript("OnScrollRangeChanged", function()
+		local f = this:GetParent()
+		if f then
+			UpdateBotPanelScrollRange(f)
+		end
+	end)
+	scroll:SetScript("OnSizeChanged", function()
+		local f = this:GetParent()
+		if f then
+			UpdateBotPanelScrollRange(f)
+		end
+	end)
+
+	local content = CreateFrame("Frame", "MangosbotBotFrameContent", scroll)
+	content:SetWidth(BP_CONTENT_W)
+	content:SetHeight(400)
+	scroll:SetScrollChild(content)
+	frame.content = content
+
+	local y = 4
+
+	-- Movement
+	local hMove = CreateSectionHeader(content, "Movement")
+	hMove:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -y)
+	y = y + 18
+	local div1 = CreateDivider(content, BP_CONTENT_W)
+	div1:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -y)
+	y = y + 10
+
+	frame.setters = {}
+	local setter
+	setter, y = PlaceDropdownRow(content, y, "Formation", FORMATION_OPTS, "formation ")
+	frame.setters.formation = setter
+	setter, y = PlaceDropdownRow(content, y, "Stance", STANCE_OPTS, "stance ")
+	frame.setters.stance = setter
+	y = y + BP_SECTION_GAP
+
+	-- Looting
+	local hLoot = CreateSectionHeader(content, "Looting")
+	hLoot:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -y)
+	y = y + 18
+	local div2 = CreateDivider(content, BP_CONTENT_W)
+	div2:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -y)
+	y = y + 10
+
+	setter, y = PlaceDropdownRow(content, y, "Loot filter", LOOT_OPTS, "ll ")
+	frame.setters.loot = setter
+	setter, y = PlaceDropdownRow(content, y, "Save mana", SAVEMANA_OPTS, "save mana ")
+	frame.setters.savemana = setter
+	y = y + BP_SECTION_GAP
+
+	-- Targeting marks
+	local hMark = CreateSectionHeader(content, "Target marks")
+	hMark:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -y)
+	y = y + 18
+	local div3 = CreateDivider(content, BP_CONTENT_W)
+	div3:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -y)
+	y = y + 10
+
+	setter, y = PlaceDropdownRow(content, y, "Attack mark", MARK_OPTS, "rti ")
+	frame.setters.rti = setter
+	setter, y = PlaceDropdownRow(content, y, "Crowd control", MARK_OPTS, "rti cc ")
+	frame.setters.rti_cc = setter
+	y = y + BP_SECTION_GAP
+
+	-- Behavior
+	frame.checkboxes = {}
+	for gi = 1, table.getn(BEHAVIOR_GROUPS) do
+		local g = BEHAVIOR_GROUPS[gi]
+		local hs = CreateSectionHeader(content, g.title)
+		hs:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -y)
+		y = y + 18
+		local dg = CreateDivider(content, BP_CONTENT_W)
+		dg:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -y)
+		y = y + 8
+		y = PlaceCheckboxGrid(content, y, g.items, frame.checkboxes)
+		y = y + BP_SECTION_GAP
+	end
+
+	-- Class section (filled on refresh)
+	frame.classHeader = CreateSectionHeader(content, "Class")
+	frame.classHeader:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -y)
+	frame.classHeader:Hide()
+	frame.classDivider = CreateDivider(content, BP_CONTENT_W)
+	frame.classDivider:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -(y + 18))
+	frame.classDivider:Hide()
+	frame.classSectionY = y
+	frame.classCheckboxes = {}
+	frame.currentClass = nil
+	frame.contentHeight = y + 8
+	LayoutContentHeight(frame)
+
+	if UIPanelWindows ~= nil then
+		UIPanelWindows["MangosbotBotFrame"] = { area = "left", pushable = 3, whileDead = 1 }
+	end
+
+	frame:SetScript("OnShow", function()
+		if CurrentBot == nil then
+			if HideUIPanel then
+				HideUIPanel(this)
+			else
+				this:Hide()
+			end
+		else
+			RefreshBotPanel()
+		end
+	end)
+
+	return frame
+end
+
+function IsBotPanelTarget()
+	local name = GetUnitName("target")
+	if name == nil then
+		return false
+	end
+	local selfName = GetUnitName("player")
+	if name == selfName then
+		return false
+	end
+	if not UnitExists("target") then
+		return false
+	end
+	if UnitIsEnemy("target", "player") then
+		return false
+	end
+	if not UnitIsPlayer("target") then
+		return false
+	end
+	if botTable[name] ~= nil then
+		return true
+	end
+	if UnitInParty("target") or UnitInRaid("target") then
+		return true
+	end
+	return false
+end
+
+function ShowBotPanelFor(name)
+	if name == nil or name == "" then
+		return
+	end
+	CurrentBot = name
+	QueryBotPanelState(name)
+	local f = MangosbotBotFrame
+	if f == nil then
+		return
+	end
+	if ShowUIPanel then
+		ShowUIPanel(f)
+	else
+		f:Show()
+	end
+	RefreshBotPanel()
+end
+
+function HideBotPanel()
+	CurrentBot = nil
+	local f = MangosbotBotFrame
+	if f == nil then
+		return
+	end
+	if HideUIPanel then
+		HideUIPanel(f)
+	else
+		f:Hide()
+	end
+end
+
+local function RebuildClassSection(f, clsKey)
+	for _, box in pairs(f.classCheckboxes) do
+		box:Hide()
+	end
+	f.classCheckboxes = {}
+	f.currentClass = clsKey
+
+	local classList = CLASS_STRATEGIES[clsKey]
+	local y = f.classSectionY
+	if classList == nil or table.getn(classList) == 0 then
+		f.classHeader:Hide()
+		f.classDivider:Hide()
+		f.contentHeight = y + 8
+		LayoutContentHeight(f)
+		return
+	end
+
+	f.classHeader:Show()
+	if f.classHeader.ClearAllPoints then
+		f.classHeader:ClearAllPoints()
+	end
+	f.classHeader:SetPoint("TOPLEFT", f.content, "TOPLEFT", 0, -y)
+	y = y + 18
+	f.classDivider:Show()
+	if f.classDivider.ClearAllPoints then
+		f.classDivider:ClearAllPoints()
+	end
+	f.classDivider:SetPoint("TOPLEFT", f.content, "TOPLEFT", 0, -y)
+	y = y + 8
+	y = PlaceCheckboxGrid(f.content, y, classList, f.classCheckboxes)
+	f.contentHeight = y + 12
+	LayoutContentHeight(f)
+end
+
+function RefreshBotPanel()
+	local f = MangosbotBotFrame
+	if f == nil or f.portrait == nil or f.nameText == nil then
+		return
+	end
+	if not f:IsVisible() then
+		return
+	end
+	if CurrentBot == nil then
+		f:Hide()
+		return
+	end
+	local bot = botTable[CurrentBot]
+	if bot == nil then
+		bot = {}
+	end
+
+	local targetName = GetUnitName("target")
+	if targetName == CurrentBot and UnitExists("target") and SetPortraitTexture then
+		SetPortraitTexture(f.portrait.texture, "target")
+	else
+		local cls = bot.class or "Unknown"
+		local clsKey = string.lower(ClassToken(cls))
+		f.portrait.texture:SetTexture("Interface\\Addons\\Mangosbot\\Images\\cls_" .. clsKey .. ".tga")
+	end
+
+	f.nameText:SetText(CurrentBot or "Bot")
+	if f.titleText then
+		f.titleText:SetText(CurrentBot or "Bot")
+	end
+	local cls = GetClassForBot(bot)
+	local clsToken = ClassToken(cls)
+	local color = RAID_CLASS_COLORS[clsToken]
+	if color ~= nil then
+		f.nameText:SetTextColor(color.r, color.g, color.b)
+	else
+		f.nameText:SetTextColor(1, 0.82, 0)
+	end
+	f.subText:SetText(cls .. " - " .. GetBotRoleText(bot))
+	if f.moneyDisplay and f.moneyDisplay.SetCopper then
+		f.moneyDisplay:SetCopper(ParseMoneyToCopper(bot.money))
+	end
+	if f.xpBar and f.xpBar.SetXp then
+		f.xpBar:SetXp(bot.xp)
+	end
+
+	if f.setters ~= nil then
+		if f.setters.formation then
+			f.setters.formation(bot.formation)
+		end
+		if f.setters.stance then
+			f.setters.stance(bot.stance)
+		end
+		if f.setters.loot then
+			f.setters.loot(bot.loot)
+		end
+		if f.setters.savemana then
+			f.setters.savemana(bot.savemana)
+		end
+		if f.setters.rti then
+			f.setters.rti(bot.rti)
+		end
+		if f.setters.rti_cc then
+			f.setters.rti_cc(bot.rti_cc)
+		end
+	end
+
+	for tok, box in pairs(f.checkboxes) do
+		local on = false
+		if BotHasStrategy then
+			on = BotHasStrategy(bot, tok) and true or false
+		end
+		box:SetChecked(on)
+	end
+
+	local clsKey = string.upper(ClassToken(cls or ""))
+	if f.currentClass ~= clsKey then
+		RebuildClassSection(f, clsKey)
+	end
+
+	for tok, box in pairs(f.classCheckboxes) do
+		local on = false
+		if BotHasStrategy then
+			on = BotHasStrategy(bot, tok) and true or false
+		end
+		box:SetChecked(on)
+	end
 end
 
 function CreateBotRoster()
@@ -1503,15 +1748,7 @@ local function SetRosterItemHandlers(item, key)
 	local menuBtn = quickbar.buttons["menu"]
 
 	item.cls["key"] = key
-	item.cls:SetScript("OnClick", function()
-		if CurrentBot == item.cls["key"] then
-			CurrentBot = nil
-			SelectedBotPanel:Hide()
-		else
-			CurrentBot = item.cls["key"]
-			QuerySelectedBot(CurrentBot)
-		end
-	end)
+	-- BotPanel (UIPanel) opens on target; roster click does not open it.
 
 	loginBtn["key"] = key
 	loginBtn:SetScript("OnClick", function()
@@ -1967,14 +2204,39 @@ function UpdatePartyBotOverlays()
 	end
 end
 
-SelectedBotPanel = CreateSelectedBotPanel()
 BotRoster = CreateBotRoster()
 BotDebugPanel = CreateBotDebugPanel()
 DropDownMenu = CreateDropDownMenu(BotRoster)
 PartyBotOverlays = CreatePartyBotOverlays()
 CurrentBot = nil
 
--- Ensure slash targets exist even if a later init step failed on older clients.
-if BotRoster == nil or BotDebugPanel == nil or SelectedBotPanel == nil then
-	print("Mangosbot: UI init incomplete")
+do
+	local ok, result = pcall(CreateBotPanel)
+	if ok and result ~= nil then
+		MangosbotBotFrame = result
+	else
+		local err = result
+		local frame = nil
+		if getglobal ~= nil then
+			frame = getglobal("MangosbotBotFrame")
+		end
+		if frame == nil then
+			frame = CreateFrame("Frame", "MangosbotBotFrame", UIParent)
+		end
+		if frame ~= nil then
+			MangosbotBotFrame = frame
+			frame:Hide()
+		end
+		if err ~= nil then
+			print("Mangosbot: BotPanel create failed: " .. tostring(err))
+		end
+	end
+end
+
+local _missing = {}
+if BotRoster == nil then table.insert(_missing, "BotRoster") end
+if BotDebugPanel == nil then table.insert(_missing, "BotDebugPanel") end
+if MangosbotBotFrame == nil then table.insert(_missing, "MangosbotBotFrame") end
+if table.getn(_missing) > 0 then
+	print("Mangosbot: UI init incomplete (" .. table.concat(_missing, ", ") .. ")")
 end

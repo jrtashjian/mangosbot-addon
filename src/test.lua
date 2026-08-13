@@ -7,9 +7,10 @@ RAID_CLASS_COLORS = {}
 GameTooltip = { SetOwner = function() end, SetText = function() end, Show = function() end, Hide = function() end }
 SlashCmdList = SlashCmdList or {}
 
-local function stubFontString()
+	local function stubFontString()
 	return {
 		SetPoint = function() end,
+		ClearAllPoints = function() end,
 		SetWidth = function() end,
 		SetHeight = function() end,
 		SetFont = function() end,
@@ -29,8 +30,11 @@ local function stubTexture()
 		SetTexture = function() end,
 		SetAllPoints = function() end,
 		SetPoint = function() end,
+		ClearAllPoints = function() end,
 		SetWidth = function() end,
 		SetHeight = function() end,
+		SetTexCoord = function() end,
+		SetVertexColor = function() end,
 		Hide = function() end,
 		Show = function() end,
 	}
@@ -102,17 +106,68 @@ function CreateFrame(_kind, name, _parent, template)
 	f.SetMultiLine = nop
 	f.SetAutoFocus = nop
 	f.SetMaxLetters = nop
-	f.SetScrollChild = nop
+	f.UpdateScrollChildRect = nop
+	f.EnableMouseWheel = nop
+	f._scrollValue = 0
+	f.GetVerticalScroll = function()
+		return f._scrollValue
+	end
+	f.SetVerticalScroll = function(_self, v)
+		f._scrollValue = v or 0
+	end
+	f.GetVerticalScrollRange = function()
+		return 0
+	end
+	f.GetScrollChild = function()
+		return f._scrollChild
+	end
+	f.SetScrollChild = function(_self, child)
+		f._scrollChild = child
+	end
+	f.GetParent = function()
+		return f._parent
+	end
+	f._minV, f._maxV, f._value = 0, 0, 0
+	f.SetMinMaxValues = function(_self, minV, maxV)
+		f._minV, f._maxV = minV or 0, maxV or 0
+	end
+	f.GetMinMaxValues = function()
+		return f._minV, f._maxV
+	end
+	f.SetValue = function(_self, v)
+		f._value = v or 0
+	end
+	f.GetValue = function()
+		return f._value
+	end
+	f.SetValueStep = nop
+	f.SetStatusBarTexture = nop
+	f.SetStatusBarColor = nop
+	f.GetFrameLevel = function()
+		return 1
+	end
 	f.Clear = nop
 	f.AddMessage = nop
 	f.RegisterEvent = nop
+	f.SetChecked = nop
+	f.GetChecked = function()
+		return false
+	end
 	frames[#frames + 1] = f
 	if name ~= nil then
+		-- WoW rejects duplicate named frames; mirror that so fallbacks stay honest.
+		if _G[name] ~= nil then
+			return nil
+		end
 		_G[name] = f
 		if template == "UIDropDownMenuTemplate" then
 			_G[name .. "Text"] = stubFontString()
 		end
+		if template == "UICheckButtonTemplate" then
+			_G[name .. "Text"] = stubFontString()
+		end
 	end
+	f._parent = _parent
 	return f
 end
 
@@ -174,6 +229,12 @@ HideDropDownMenu = function() end
 ToggleDropDownMenu = function() end
 UIDropDownMenu_Initialize = function() end
 UIDropDownMenu_AddButton = function() end
+UIDropDownMenu_SetWidth = function() end
+UIDropDownMenu_SetSelectedValue = function() end
+ShowUIPanel = function(f) if f then f:Show() end end
+HideUIPanel = function(f) if f then f:Hide() end end
+SetPortraitTexture = function() end
+UIPanelWindows = {}
 GetCursorPosition = function()
 	return 0, 0
 end
@@ -196,6 +257,10 @@ assert(loadfile("../Mangosbot_Core.lua"))()
 assert(loadfile("../Mangosbot_Protocol.lua"))()
 assert(loadfile("../Mangosbot_Commands.lua"))()
 assert(loadfile("../Mangosbot_UI.lua"))()
+
+check("MangosbotBotFrame created at load", MangosbotBotFrame ~= nil)
+check("BotRoster created at load", BotRoster ~= nil)
+check("BotDebugPanel created at load", BotDebugPanel ~= nil)
 
 check("client detects wotlk", GetMangosbotVersion() == 2)
 check("client has addon whisper", GetMangosbotClient().hasAddonWhisper == true)
@@ -303,17 +368,19 @@ OnWhisper(
         .. '|cff00ff0078|cffffd333/|cff00ff00200%|cffffffff XP, |h|cff1eff00214|h|cffffffff|h Pwr',
     bot
 )
-check("stats parses money", botTable[bot].money == "12g 34s 5c")
-check("stats parses bag free", botTable[bot].bagFree == 20)
-check("stats parses bag total", botTable[bot].bagTotal == 56)
-check("stats keeps strategy cache", botTable[bot].role == "tank")
+	check("stats parses money", botTable[bot].money == "12g 34s 5c")
+	check("stats parses bag free", botTable[bot].bagFree == 20)
+	check("stats parses bag total", botTable[bot].bagTotal == 56)
+	check("stats parses durability", botTable[bot].durability == "100% (0)")
+	check("stats parses xp", botTable[bot].xp == "78/200%")
+	check("stats keeps strategy cache", botTable[bot].role == "tank")
 
 OnWhisper('0, |cff00ff00|h16/16|h|cffffffff Bag', bot)
 check("stats zero money", botTable[bot].money == "0")
 check("stats zero money bags", botTable[bot].bagFree == 16 and botTable[bot].bagTotal == 16)
 
-local stats = ParseStatsReply('5g 20s, 30/40 Bag, 80% (0) Dur')
-check("ParseStatsReply plain line", stats.money == "5g 20s" and stats.bagFree == 30 and stats.bagTotal == 40)
+	local stats = ParseStatsReply('5g 20s, 30/40 Bag, 80% (0) Dur')
+	check("ParseStatsReply plain line", stats.money == "5g 20s" and stats.bagFree == 30 and stats.bagTotal == 40 and stats.durability == "80% (0)")
 check("ParseStatsReply nil on non-stats", ParseStatsReply('Formation: near') == nil)
 check("ParseStatsReply nil on nil", ParseStatsReply(nil) == nil)
 

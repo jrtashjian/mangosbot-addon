@@ -340,8 +340,8 @@ local function ParseStrategyList(bot, type, text)
 	bot["strategy"][type] = list
 end
 
--- Parse a playerbots "stats" reply: money, free/total bag slots.
--- Reply shape (after color strip): "12g 34s 5c, 20/56 Bag, ... Dur, ... XP, ... Pwr".
+-- Parse a playerbots "stats" reply: money, free/total bag slots, durability, xp.
+-- Reply shape (after color strip): "12g 34s 5c, 20/56 Bag, 100% (0) Dur, 78/200% XP, 214 Pwr".
 -- Returns nil when the message is not a stats reply.
 function ParseStatsReply(message)
 	if message == nil then
@@ -352,10 +352,14 @@ function ParseStatsReply(message)
 		return nil
 	end
 	local money = string.match(message, "^([^,]*)")
+	local durability = string.match(message, "(%d+%%[^,]-)%s*Dur")
+	local xp = string.match(message, "([^,]+)%s*XP")
 	return {
 		money = trim2(money),
 		bagFree = tonumber(bagFree),
 		bagTotal = tonumber(bagTotal),
+		durability = durability and trim2(durability) or nil,
+		xp = xp and trim2(xp) or nil,
 	}
 end
 
@@ -490,6 +494,8 @@ function OnWhisper(message, sender)
 		bot["money"] = stats.money
 		bot["bagFree"] = stats.bagFree
 		bot["bagTotal"] = stats.bagTotal
+		bot["durability"] = stats.durability
+		bot["xp"] = stats.xp
 	end
 end
 
@@ -527,6 +533,8 @@ function OnSystemMessage(message)
 							"money",
 							"bagFree",
 							"bagTotal",
+							"durability",
+							"xp",
 							"strategy",
 							"formation",
 							"stance",
