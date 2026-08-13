@@ -613,9 +613,9 @@ check("loot label matches keyword", BotLootLabel("gray") == "Gray items")
 check("loot label matches trade skills",
     BotLootLabel("equip,vendor,quest,skill,use") == "Trade skills")
 
--- SendStrategyToggle sends a bare toggle, then re-queries the engine after the
--- AI settles (no ",?" on the toggle: the delayed query wins over any stale
--- panel-open reply and reflects post-settle strategy state).
+-- SendStrategyToggle sends a bare toggle, then debounces the re-query of the
+-- engines touched during a burst (no ",?" on the toggle: the delayed query wins
+-- over any stale panel-open reply and reflects post-settle strategy state).
 for _ = 1, 12 do waitFrame.script() end -- drain any leftover wait records
 local sentCommands = {}
 local realSendChatMessage = SendChatMessage
@@ -634,6 +634,32 @@ check("toggle sends no query on the toggle", #sentCommands == 1)
 for _ = 1, 12 do waitFrame.script() end
 check("toggle re-queries engine after settle", sentCommands[2] == "BOT\tnc ?")
 check("toggle re-query only its engine", #sentCommands == 2)
+
+-- A burst of toggles collapses to one re-query per engine touched.
+sentCommands = {}
+local potionsCheckbox = MangosbotBotFrame.checkboxes["potions"]
+this = foodCheckbox
+foodCheckbox.script()
+this = potionsCheckbox
+potionsCheckbox.script()
+check("burst sends both toggles immediately", #sentCommands == 2)
+for _ = 1, 12 do waitFrame.script() end
+check("burst re-queries each touched engine once", #sentCommands == 4)
+check("burst nc re-query", sentCommands[3] == "BOT\tnc ?")
+check("burst react re-query", sentCommands[4] == "BOT\treact ?")
+
+-- A re-arm during the quiet period cancels the stale timer: the requery reflects
+-- only the engines of the newest burst.
+sentCommands = {}
+this = foodCheckbox
+foodCheckbox.script()
+for _ = 1, 5 do waitFrame.script() end -- 0.5s into the debounce window
+this = potionsCheckbox
+potionsCheckbox.script()
+check("re-arm sends only the new toggle", #sentCommands == 2)
+for _ = 1, 12 do waitFrame.script() end
+check("re-arm re-queries the full burst once", #sentCommands == 4)
+check("re-arm stale timer no-op", sentCommands[3] == "BOT\tnc ?")
 this = nil
 SendChatMessage = realSendChatMessage
 
